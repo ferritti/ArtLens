@@ -2,7 +2,7 @@
     "mona-lisa": {
         "title": "Gioconda",
         "artist": "Leonardo da Vinci",
-        "description": "Famoso ritratto del Rinascimento, noto per il suo sorriso enigmatico.",
+        "description": "La Gioconda, o Monna Lisa, è un celebre dipinto di Leonardo da Vinci, realizzato tra il 1503 e il 1506 circa. Ritrae una donna con un enigmatico sorriso, seduta davanti a un paesaggio sfumato ottenuto con la tecnica dello sfumato. Lo sguardo diretto e la posa rilassata creano un senso di intimità e mistero. È conservata al Museo del Louvre di Parigi ed è considerata uno dei capolavori più famosi e studiati della storia dell’arte.",
         "embedding": [
             0.0,
             0.03534356877207756,
