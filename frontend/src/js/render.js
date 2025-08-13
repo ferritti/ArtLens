@@ -178,7 +178,8 @@ export async function drawDetections(ctx, result, onHotspotClick) {
       if (matched && matched.confidence >= COSINE_THRESHOLD) {
         const { entry, confidence } = matched;
         uiLabel = `${entry.title || 'Artwork'} ${(confidence*100).toFixed(1)}%`;
-        lastMatches.push({ entry, confidence, box: det.boundingBox });
+        const hitBox = det.__alignedBox || det.boundingBox;
+        lastMatches.push({ entry, confidence, box: hitBox });
         anyMatch = true;
       }
 
