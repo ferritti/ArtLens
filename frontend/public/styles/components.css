@@ -68,7 +68,7 @@ button:disabled { opacity: 0.6; cursor: default; }
   position: absolute;
   top: -9999px;
   left: -9999px;
-  transform: translate(-50%, 0);
+  transform: translate(-50%, -50%);
   z-index: 6;
   padding: 10px 14px;
   border-radius: 999px;

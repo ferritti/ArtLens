@@ -87,11 +87,11 @@ export function placeHintOverBox(box) {
   const dw = (box.width || 0) * map.scale;
   const dh = (box.height || 0) * map.scale;
   const margin = 12;
-  const cx = dx + dw / 2;
-  const clampedCenter = Math.max(dx + margin, Math.min(dx + Math.max(0, dw - margin), cx));
-  const y = Math.max(margin, Math.min(map.dH - margin, dy + Math.max(8, Math.min(16, dh * 0.06))));
-  hintEl.style.left = `${clampedCenter}px`;
-  hintEl.style.top = `${y}px`;
+  const cx = Math.max(margin, Math.min(map.dW - margin, dx + dw / 2));
+  const cy = Math.max(margin, Math.min(map.dH - margin, dy + dh / 2));
+  hintEl.style.left = `${cx}px`;
+  hintEl.style.top = `${cy}px`;
+  // Keep hint width reasonable and within the box when possible
   const maxW = Math.max(100, Math.floor(Math.min(Math.max(0, dw - margin * 2), map.dW - margin * 2)));
   if (isFinite(maxW) && maxW > 0) hintEl.style.maxWidth = `${maxW}px`;
 }
@@ -102,25 +102,7 @@ export function clearHotspots() {
 }
 
 export function renderHotspot(match, onClick) {
-  if (!hotspotsEl || !match) return;
-  clearHotspots();
-  const { entry, confidence, box } = match;
-  const map = getDisplayMapping();
-  const dx = map.offsetX + (box.originX || 0) * map.scale;
-  const dy = map.offsetY + (box.originY || 0) * map.scale;
-  const dw = (box.width || 0) * map.scale;
-  const dh = (box.height || 0) * map.scale;
-  const margin = 12;
-  let hx = Math.max(margin, Math.min(map.dW - margin, dx + dw * 0.5));
-  let hy = Math.max(margin, Math.min(map.dH - margin, dy + Math.max(16, Math.min(32, dh * 0.12))));
-  const btn = document.createElement('button');
-  btn.className = 'hotspot';
-  btn.type = 'button';
-  btn.innerHTML = '<span class="icon" aria-hidden="true">👆</span>';
-  btn.setAttribute('aria-label', 'Tocca per i dettagli sull’opera');
-  btn.title = 'Tocca per i dettagli';
-  btn.style.left = `${hx}px`;
-  btn.style.top = `${hy}px`;
-  btn.addEventListener('click', (e) => { e.stopPropagation(); if (onClick) onClick(entry, confidence); });
-  hotspotsEl.appendChild(btn);
+  // Hotspot (emoji button) intentionally removed.
+  if (!hotspotsEl) return;
+  hotspotsEl.innerHTML = '';
 }
