@@ -8,6 +8,8 @@ import { drawDetections, getLastMatches, resetRenderState } from './render.js';
 let stream = null;
 let running = false;
 let lastVideoTime = -1;
+let lastInferTime = 0;
+const INFER_INTERVAL_MS = 90; // ~11 Hz throttling to reduce load and artifacts
 
 function status(msg) {
   setStatus(statusEl, msg);
@@ -167,8 +169,9 @@ function startLoop() {
     if (!running) return;
     const now = performance.now();
     const t = videoEl.currentTime;
-    if (detector && videoEl.readyState >= 2 && (t !== lastVideoTime)) {
+    if (detector && videoEl.readyState >= 2 && (t !== lastVideoTime) && (now - lastInferTime >= INFER_INTERVAL_MS)) {
       lastVideoTime = t;
+      lastInferTime = now;
       const result = detector.detectForVideo(videoEl, now);
       await drawDetections(ctx, result, (entry, confidence) => openDetail(entry, confidence));
     }

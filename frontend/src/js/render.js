@@ -2,7 +2,7 @@ import { videoEl, canvasEl } from './dom.js';
 import { clearHotspots, renderHotspot, placeHintOverBox, showHintFor, hideHint, showInfo } from './ui.js';
 import { cropToCanvasFromVideo, embedFromCanvas, cosineSim, hasEmbedModel } from './embedding.js';
 import { artworkDB, dbDim } from './db.js';
-import { COSINE_THRESHOLD, DEBUG_FALLBACK_CROP } from './constants.js';
+import { COSINE_THRESHOLD, DEBUG_FALLBACK_CROP, MAX_BOXES_PER_FRAME, MIN_BOX_SCORE } from './constants.js';
 import { matchOnServer } from './backend.js';
 
 let lastMatches = [];
@@ -34,7 +34,8 @@ export async function drawDetections(ctx, result, onHotspotClick) {
   ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
   ctx.restore();
 
-  ctx.lineWidth = 3;
+  const lw = 2;
+  ctx.lineWidth = lw;
   ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--box-color') || '#2ee6a7';
   ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--box-fill') || 'rgba(46,230,167,0.15)';
   ctx.font = '14px Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif';
@@ -107,19 +108,42 @@ export async function drawDetections(ctx, result, onHotspotClick) {
   }
 
   let anyMatch = false;
-  for (const det of result.detections) {
-    const box = det.boundingBox;
-    const x = box.originX;
-    const y = box.originY;
-    const bw = box.width;
-    const bh = box.height;
 
+  // Filter detections by score and limit to top-N
+  const filtered = (result.detections || [])
+    .map(d => ({ det: d, score: d.categories?.[0]?.score ?? 0 }))
+    .filter(x => x.score >= MIN_BOX_SCORE)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, MAX_BOXES_PER_FRAME);
+
+  // Batch draw rectangles (one fill + one stroke) with pixel-aligned coords
+  if (filtered.length) {
     ctx.beginPath();
-    ctx.rect(x, y, bw, bh);
+    for (const { det } of filtered) {
+      const box = det.boundingBox;
+      const rawX = box.originX; const rawY = box.originY;
+      const rawW = box.width;   const rawH = box.height;
+      const x1 = Math.max(0, Math.min(w, rawX));
+      const y1 = Math.max(0, Math.min(h, rawY));
+      const x2 = Math.max(0, Math.min(w, rawX + rawW));
+      const y2 = Math.max(0, Math.min(h, rawY + rawH));
+      let x = Math.round(Math.min(x1, x2));
+      let y = Math.round(Math.min(y1, y2));
+      let rw = Math.round(Math.abs(x2 - x1));
+      let rh = Math.round(Math.abs(y2 - y1));
+      rw = Math.max(1, rw);
+      rh = Math.max(1, rh);
+      ctx.rect(x, y, rw, rh);
+      det.__alignedBox = { originX: x, originY: y, width: rw, height: rh };
+    }
     ctx.fill();
     ctx.stroke();
+  }
 
+  // Labels and matching per detection (limited set)
+  for (const { det } of filtered) {
     const cat = det.categories?.[0];
+    const box = det.__alignedBox || det.boundingBox;
     if (cat) {
       if (categoryLogCount < 8) {
         try { console.log('Detected categories:', det.categories?.map(c => ({ name: c.categoryName, score: c.score }))); } catch {}
@@ -132,7 +156,7 @@ export async function drawDetections(ctx, result, onHotspotClick) {
 
       try {
         if (hasEmbedModel()) {
-          const crop = cropToCanvasFromVideo(box);
+          const crop = cropToCanvasFromVideo(det.boundingBox);
           const emb = embedFromCanvas(crop);
           try {
             const matches = await matchOnServer(emb, 1, COSINE_THRESHOLD);
@@ -154,26 +178,28 @@ export async function drawDetections(ctx, result, onHotspotClick) {
       if (matched && matched.confidence >= COSINE_THRESHOLD) {
         const { entry, confidence } = matched;
         uiLabel = `${entry.title || 'Artwork'} ${(confidence*100).toFixed(1)}%`;
-        lastMatches.push({ entry, confidence, box });
+        lastMatches.push({ entry, confidence, box: det.boundingBox });
         anyMatch = true;
       }
 
       const textPaddingX = 6;
       const textPaddingY = 4;
       const metrics = ctx.measureText(uiLabel);
-      const textW = metrics.width + textPaddingX * 2;
+      const textW = Math.round(metrics.width + textPaddingX * 2);
       const textH = 18 + textPaddingY * 2;
 
+      const labelX = Math.round(box.originX);
+      const labelY = Math.max(0, Math.round(box.originY - textH));
       ctx.save();
       ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--label-bg') || 'rgba(0,0,0,0.6)';
       ctx.strokeStyle = 'transparent';
       ctx.beginPath();
-      ctx.rect(x, Math.max(0, y - textH), textW, textH);
+      ctx.rect(labelX, labelY, textW, textH);
       ctx.fill();
       ctx.restore();
 
       ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--label-fg') || '#fff';
-      ctx.fillText(uiLabel, x + textPaddingX, Math.max(12 + textPaddingY, y - textH + 12 + textPaddingY));
+      ctx.fillText(uiLabel, labelX + textPaddingX, Math.max(12 + textPaddingY, labelY + 12 + textPaddingY));
     }
   }
 

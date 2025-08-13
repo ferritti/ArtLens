@@ -32,7 +32,6 @@
   object-fit: cover;
   background: #000;
   z-index: 0; /* behind overlays */
-  filter: saturate(0.95) contrast(1.03);
 }
 
 /* Transparent overlay canvas perfectly aligned with the video */
@@ -44,6 +43,11 @@
   object-fit: cover;
   z-index: 2;
   pointer-events: none;
+  background-color: transparent !important;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  contain: paint;
+  will-change: transform;
 }
 
 /* Top brand bar */
