@@ -1,10 +1,17 @@
-import { appEl, videoEl, hintEl, hotspotsEl, infoEl } from './dom.js';
+import { appEl, videoEl, hintEl, hotspotsEl, infoEl, aimGuideEl } from './dom.js';
 import { getLang } from './db.js';
 
 let hintHideTimer = null;
 
 export function status(statusEl, msg) {
   if (statusEl) statusEl.textContent = msg;
+}
+
+export function showAimGuide() {
+  try { aimGuideEl?.classList.remove('hidden'); } catch {}
+}
+export function hideAimGuide() {
+  try { aimGuideEl?.classList.add('hidden'); } catch {}
 }
 
 export function showInfo(name, description, confidence) {

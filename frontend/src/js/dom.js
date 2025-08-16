@@ -2,6 +2,7 @@
 export const appEl = document.getElementById('app');
 export const videoEl = document.getElementById('camera');
 export const canvasEl = document.getElementById('overlay');
+export const aimGuideEl = document.getElementById('aimGuide');
 export const hudEl = document.getElementById('hud');
 export const startBtn = document.getElementById('startBtn');
 export const statusEl = document.getElementById('status');

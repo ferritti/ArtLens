@@ -1,5 +1,5 @@
 import { appEl, videoEl, canvasEl, hudEl, startBtn, statusEl, infoEl, detailEl, detailTitleEl, detailMetaEl, detailBodyEl, backBtn } from './dom.js';
-import { status as setStatus, showInfo, hideHint, clearHotspots, clientPointToVideo, pointInBox } from './ui.js';
+import { status as setStatus, showInfo, hideHint, clearHotspots, clientPointToVideo, pointInBox, showAimGuide, hideAimGuide } from './ui.js';
 import { initDetector, detector, closeDetector } from './detection.js';
 import { initEmbeddingModel } from './embedding.js';
 import { loadArtworkDB, pickLangText, getLang, setLang } from './db.js';
@@ -120,6 +120,7 @@ function openDetail(entry, confidence) {
   try { infoEl.style.display = 'none'; } catch {}
   hideHint();
   clearHotspots();
+  try { hideAimGuide(); } catch {}
   if (detailTitleEl) detailTitleEl.textContent = entry?.title || 'Opera';
   let meta = '';
   if (entry?.artist) meta += entry.artist;
@@ -162,6 +163,7 @@ function closeDetail() {
   try { clearHotspots(); } catch {}
   resetRenderState();
   if (!running) { running = true; startLoop(); }
+  try { showAimGuide(); } catch {}
 }
 
 backBtn?.addEventListener('click', (e) => {
@@ -193,6 +195,7 @@ startBtn.addEventListener('click', async () => {
     hudEl.classList.add('hidden');
     running = true;
     startLoop();
+    try { showAimGuide(); } catch {}
 
     try {
       status('Initializing object detector…');

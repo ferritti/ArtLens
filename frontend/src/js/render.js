@@ -1,5 +1,5 @@
 import { videoEl, canvasEl } from './dom.js';
-import { clearHotspots, renderHotspot, placeHintOverBox, showHintFor, hideHint, showInfo } from './ui.js';
+import { clearHotspots, renderHotspot, placeHintOverBox, showHintFor, hideHint, showInfo, showAimGuide, hideAimGuide } from './ui.js';
 import { cropToCanvasFromVideo, embedFromCanvas, cosineSim, hasEmbedModel } from './embedding.js';
 import { artworkDB, dbDim, pickLangText } from './db.js';
 import { COSINE_THRESHOLD, DEBUG_FALLBACK_CROP, MAX_BOXES_PER_FRAME, MIN_BOX_SCORE } from './constants.js';
@@ -82,6 +82,7 @@ export async function drawDetections(ctx, result, onHotspotClick) {
             showHintFor(entry, box);
           }
           renderHotspot({ entry, confidence, box }, onHotspotClick);
+          hideAimGuide();
         }
       } catch (e) { console.warn('Fallback match failed:', e); }
     }
@@ -90,6 +91,7 @@ export async function drawDetections(ctx, result, onHotspotClick) {
       hideHint();
       showInfo(null);
       clearHotspots();
+      showAimGuide();
     }
     return;
   }
@@ -185,7 +187,9 @@ export async function drawDetections(ctx, result, onHotspotClick) {
     hideHint();
     showInfo(null);
     clearHotspots();
+    showAimGuide();
   } else if (lastMatches && lastMatches.length) {
+    hideAimGuide();
     let best = lastMatches[0];
     for (const m of lastMatches) if (m.confidence > best.confidence) best = m;
     renderHotspot(best, onHotspotClick);
