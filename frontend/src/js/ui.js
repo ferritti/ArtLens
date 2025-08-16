@@ -21,14 +21,10 @@ export function showInfo(name, description, confidence) {
 }
 
 export function showHintFor(entry, box) {
-  const lang = getLang();
-  const text = lang === 'en' ? 'Tap the artwork' : 'Tocca l’opera';
-  if (hintEl) {
-    hintEl.textContent = text;
-    placeHintOverBox(box);
-    hintEl.classList.remove('hidden');
-    scheduleHideHint(3000);
-  }
+  // Disabled: remove touch-the-artwork hint per request
+  if (hintHideTimer) { clearTimeout(hintHideTimer); hintHideTimer = null; }
+  if (hintEl) { try { hintEl.classList.add('hidden'); } catch {} }
+  return;
 }
 
 export function hideHint() {
