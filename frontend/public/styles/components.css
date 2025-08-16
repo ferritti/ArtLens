@@ -198,7 +198,7 @@ button:disabled { opacity: 0.6; cursor: default; }
   image-rendering: auto;
   animation: pulseHand 2000ms ease-in-out infinite;
   will-change: transform;
-  opacity: 0.85;
+  opacity: 0.7;
 }
 
 @keyframes pulseHand {
