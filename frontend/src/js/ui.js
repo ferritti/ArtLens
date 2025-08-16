@@ -1,4 +1,4 @@
-import { appEl, videoEl, hintEl, hotspotsEl, infoEl, aimGuideEl } from './dom.js';
+import { appEl, videoEl, hintEl, hotspotsEl, infoEl } from './dom.js';
 import { getLang } from './db.js';
 
 let hintHideTimer = null;
@@ -7,22 +7,15 @@ export function status(statusEl, msg) {
   if (statusEl) statusEl.textContent = msg;
 }
 
-export function showAimGuide() {
-  try { aimGuideEl?.classList.remove('hidden'); } catch {}
-}
-export function hideAimGuide() {
-  try { aimGuideEl?.classList.add('hidden'); } catch {}
-}
-
 export function showInfo(name, description, confidence) {
   if (!infoEl) return;
   if (!name) {
-    infoEl.style.display = 'none';
+    try { infoEl.classList.remove('show'); } catch {}
     return;
   }
   const conf = (confidence * 100).toFixed(1);
   infoEl.innerHTML = `<div style="font-weight:700;margin-bottom:4px;">${name} <span style="opacity:.8;font-weight:500;">(${conf}%)</span></div><div style="opacity:.9;">${description || ''}</div>`;
-  infoEl.style.display = 'block';
+  try { infoEl.classList.add('show'); } catch {}
   hideHint();
 }
 
