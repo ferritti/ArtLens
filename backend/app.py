@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional, Dict, Any
 import os
 import json
@@ -133,8 +133,49 @@ def health():
 
 @app.get("/items", response_model=List[Item])
 def list_items():
-    # For now return full items (including embeddings) to keep it simple.
+    # Backward-compat: return full items (including embeddings)
     return items
+
+
+# Option B: separate catalog (metadata) and descriptors (embeddings)
+class CatalogItem(BaseModel):
+    id: Optional[str] = None
+    title: Optional[str] = None
+    artist: Optional[str] = None
+    year: Optional[str] = None
+    museum: Optional[str] = None
+    location: Optional[str] = None
+    description: Optional[str] = None
+
+    # Pydantic v2: allow unknown/extra fields to pass through (e.g., image, tags)
+    model_config = ConfigDict(extra='allow')
+
+
+@app.get("/catalog", response_model=List[CatalogItem])
+def get_catalog():
+    catalog: List[Dict[str, Any]] = []
+    for it in items:
+        # Copy without embedding
+        data = {k: v for k, v in it.items() if k != "embedding"}
+        # Ensure id present
+        if data.get("id") is None:
+            key = data.get("title")
+            if key is not None:
+                data["id"] = str(key)
+        catalog.append(data)
+    return catalog
+
+
+@app.get("/descriptors", response_model=Dict[str, List[float]])
+def get_descriptors():
+    desc: Dict[str, List[float]] = {}
+    for it in items:
+        emb = it.get("embedding")
+        if isinstance(emb, list):
+            _id = it.get("id") or it.get("title")
+            if _id is not None:
+                desc[str(_id)] = emb
+    return desc
 
 
 @app.post("/items", response_model=Item)
