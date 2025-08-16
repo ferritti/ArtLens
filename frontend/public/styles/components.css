@@ -178,8 +178,8 @@ button:disabled { opacity: 0.6; cursor: default; }
 
 /* Hand icon hotspot variant */
 .hotspot.hand {
-  width: 64px;
-  height: 64px;
+  width: 108px;
+  height: 108px;
   background: transparent;
   border: 0;
   box-shadow: none;
@@ -189,12 +189,12 @@ button:disabled { opacity: 0.6; cursor: default; }
 }
 .hotspot.hand::before { content: none; display: none; }
 .hotspot.hand img {
-  width: 56px;
-  height: 56px;
+  width: 96px;
+  height: 96px;
   object-fit: contain;
   pointer-events: none;
   user-select: none;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.55));
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.6));
   image-rendering: auto;
   animation: pulseHand 2000ms ease-in-out infinite;
   will-change: transform;
