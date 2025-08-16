@@ -59,9 +59,9 @@
   z-index: 4;
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
   gap: 12px;
-  pointer-events: none; /* purely decorative */
+  pointer-events: auto; /* interactive for language toggle */
 }
 .brand {
   font-family: "Cormorant Garamond", Georgia, serif;
