@@ -178,22 +178,30 @@ button:disabled { opacity: 0.6; cursor: default; }
 
 /* Hand icon hotspot variant */
 .hotspot.hand {
-  width: 44px;
-  height: 44px;
+  width: 64px;
+  height: 64px;
   background: transparent;
   border: 0;
   box-shadow: none;
   backdrop-filter: none;
   border-radius: 0;
-  animation: overlayFade 260ms ease both, pulseSoft 2200ms ease-in-out infinite;
+  animation: overlayFade 260ms ease both; /* keep fade-in; pulse is on the image */
 }
 .hotspot.hand::before { content: none; display: none; }
 .hotspot.hand img {
-  width: 32px;
-  height: 32px;
+  width: 56px;
+  height: 56px;
   object-fit: contain;
   pointer-events: none;
   user-select: none;
-  filter: drop-shadow(0 1px 2px rgba(0,0,0,0.55));
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.55));
   image-rendering: auto;
+  animation: pulseHand 2000ms ease-in-out infinite;
+  will-change: transform;
+}
+
+@keyframes pulseHand {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.16); }
+  100% { transform: scale(1); }
 }
