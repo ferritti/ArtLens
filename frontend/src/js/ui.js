@@ -133,13 +133,13 @@ export function renderHotspot(match, onClick) {
   const aria = lang === 'en' ? 'Open artwork details' : 'Apri dettagli opera';
   hs.setAttribute('aria-label', aria);
 
-  // Insert hand icon image served by backend
+  // Insert tap icon image served by frontend with backend fallback
   const img = document.createElement('img');
-  img.src = 'images/hand.png';
+  img.src = 'images/tap.webp';
   img.alt = '';
   img.draggable = false;
   // Fallback to backend-hosted image if local asset missing
-  img.onerror = () => { try { img.onerror = null; img.src = `${BACKEND_URL}/images/hand.png`; } catch {} };
+  img.onerror = () => { try { img.onerror = null; img.src = `${BACKEND_URL}/images/tap.webp`; } catch {} };
   hs.appendChild(img);
 
   const handle = (ev) => {
