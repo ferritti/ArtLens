@@ -40,7 +40,12 @@ app.add_middleware(
 # ----------------------------------------------------------------------------
 # In-memory DB
 # ----------------------------------------------------------------------------
+# Backward-compat synthesized items (single embedding per artwork)
 items: List[Dict[str, Any]] = []
+# Native v2 structures
+artworks: Dict[str, Dict[str, Any]] = {}
+flat_descriptors: List[Dict[str, Any]] = []
+# Embedding dimension
 db_dim: Optional[int] = None
 
 
@@ -61,8 +66,10 @@ def _ensure_list_of_items(data) -> List[Dict[str, Any]]:
 
 
 def load_db() -> None:
-    global items, db_dim
+    global items, artworks, flat_descriptors, db_dim
     items = []
+    artworks = {}
+    flat_descriptors = []
     db_dim = None
     if not os.path.exists(ART_DB_PATH):
         print(f"[ArtLens] DB file not found at {ART_DB_PATH}. Starting with empty DB.")
@@ -70,19 +77,92 @@ def load_db() -> None:
     try:
         with open(ART_DB_PATH, "r", encoding="utf-8") as f:
             data = json.load(f)
-        items = _ensure_list_of_items(data)
-        # Normalize and infer dimension
-        for it in items:
-            emb = it.get("embedding")
-            if isinstance(emb, list):
-                v = np.asarray(emb, dtype=np.float32)
-                v = _l2_normalize(v)
-                it["embedding"] = v.tolist()
-                if db_dim is None:
-                    db_dim = int(v.shape[0])
+
+        # v2 format: dict of artworks
+        if isinstance(data, dict) and not isinstance(data.get("items"), list):
+            for art_id, meta in data.items():
+                if not isinstance(meta, dict):
+                    continue
+                item = {**meta}
+                # normalize descriptions map
+                if not isinstance(item.get("descriptions"), dict):
+                    desc = item.get("description")
+                    if isinstance(desc, str) and desc:
+                        item["descriptions"] = {"it": desc}
+                item.pop("description", None)
+
+                # extract visual descriptors
+                vd_list = []
+                vds = item.get("visual_descriptors") or []
+                for idx, vd in enumerate(vds):
+                    if not isinstance(vd, dict):
+                        continue
+                    emb = vd.get("embedding")
+                    if isinstance(emb, list):
+                        v = np.asarray(emb, dtype=np.float32)
+                        v = _l2_normalize(v)
+                        if db_dim is None:
+                            db_dim = int(v.shape[0])
+                        elif int(v.shape[0]) != int(db_dim):
+                            # skip wrong-dim descriptor
+                            continue
+                        desc_id = vd.get("id") or vd.get("image_path") or f"{art_id}#{idx}"
+                        flat_descriptors.append({
+                            "artwork_id": str(art_id),
+                            "descriptor_id": str(desc_id),
+                            "image_path": vd.get("image_path"),
+                            "embedding": v.tolist(),
+                        })
+                        # store meta without embedding
+                        vd_meta = {k: v for k, v in vd.items() if k != "embedding"}
+                        vd_list.append(vd_meta)
+                item["visual_descriptors"] = vd_list
+                item["id"] = str(art_id)
+                artworks[str(art_id)] = item
+
+            # synthesize legacy items list (first descriptor per artwork)
+            for art_id, art in artworks.items():
+                first = next((d for d in flat_descriptors if d["artwork_id"] == art_id), None)
+                desc_map = art.get("descriptions") if isinstance(art.get("descriptions"), dict) else {}
+                # language fallback: it -> en -> first available
+                description = desc_map.get("it") or desc_map.get("en") or (next(iter(desc_map.values())) if desc_map else None)
+                it = {k: v for k, v in art.items() if k not in ("visual_descriptors", "descriptions")}
+                it["id"] = art_id
+                if description:
+                    it["description"] = description
+                if first:
+                    it["embedding"] = first.get("embedding")
+                items.append(it)
+        else:
+            # legacy format
+            items = _ensure_list_of_items(data)
+            for it in items:
+                emb = it.get("embedding")
+                if isinstance(emb, list):
+                    v = np.asarray(emb, dtype=np.float32)
+                    v = _l2_normalize(v)
+                    it["embedding"] = v.tolist()
+                    if db_dim is None:
+                        db_dim = int(v.shape[0])
+
+            # also build artworks/flat_descriptors from legacy for uniformity
+            for it in items:
+                art_id = str(it.get("id") or it.get("title") or len(artworks))
+                meta = {k: v for k, v in it.items() if k not in ("embedding",)}
+                meta["id"] = art_id
+                artworks[art_id] = meta
+                if isinstance(it.get("embedding"), list):
+                    flat_descriptors.append({
+                        "artwork_id": art_id,
+                        "descriptor_id": art_id,
+                        "image_path": None,
+                        "embedding": it["embedding"],
+                    })
     except Exception as e:
         print(f"[ArtLens] Failed to load DB: {e}")
         items = []
+        artworks = {}
+        flat_descriptors = []
         db_dim = None
 
 
@@ -91,26 +171,38 @@ load_db()
 # ----------------------------------------------------------------------------
 # Schemas
 # ----------------------------------------------------------------------------
-class MatchRequest(BaseModel):
-    embedding: List[float] = Field(..., description="Normalized embedding vector")
-    top_k: int = Field(1, ge=1, le=50)
-    threshold: float = Field(0.0, ge=-1.0, le=1.0)
-
-
-class MatchItem(BaseModel):
+class VisualDescriptor(BaseModel):
     id: Optional[str] = None
+    image_path: Optional[str] = None
+
+class CatalogItem(BaseModel):
+    id: str
     title: Optional[str] = None
     artist: Optional[str] = None
     year: Optional[str] = None
     museum: Optional[str] = None
     location: Optional[str] = None
+    descriptions: Optional[Dict[str, str]] = None
+    visual_descriptors: Optional[List[VisualDescriptor]] = None
+    model_config = ConfigDict(extra='allow')
+
+class MatchRequest(BaseModel):
+    embedding: List[float] = Field(..., description="Normalized embedding vector")
+    top_k: int = Field(1, ge=1, le=50)
+    threshold: float = Field(0.0, ge=-1.0, le=1.0)
+    lang: Optional[str] = Field(default=None, description='Preferred language for description (it, en, ...)')
+
+class MatchItem(BaseModel):
+    artwork_id: str
+    descriptor_id: Optional[str] = None
+    title: Optional[str] = None
+    artist: Optional[str] = None
     description: Optional[str] = None
     confidence: float
-
+    image_path: Optional[str] = None
 
 class MatchResponse(BaseModel):
     matches: List[MatchItem]
-
 
 class Item(BaseModel):
     id: Optional[str] = None
@@ -153,21 +245,13 @@ class CatalogItem(BaseModel):
 
 @app.get("/catalog", response_model=List[CatalogItem])
 def get_catalog():
-    catalog: List[Dict[str, Any]] = []
-    for it in items:
-        # Copy without embedding
-        data = {k: v for k, v in it.items() if k != "embedding"}
-        # Ensure id present
-        if data.get("id") is None:
-            key = data.get("title")
-            if key is not None:
-                data["id"] = str(key)
-        catalog.append(data)
-    return catalog
+    # Return artworks metadata (no embeddings), as loaded from v2 DB
+    return list(artworks.values())
 
 
 @app.get("/descriptors", response_model=Dict[str, List[float]])
 def get_descriptors():
+    # Legacy: return a single embedding per artwork (first descriptor)
     desc: Dict[str, List[float]] = {}
     for it in items:
         emb = it.get("embedding")
@@ -176,6 +260,26 @@ def get_descriptors():
             if _id is not None:
                 desc[str(_id)] = emb
     return desc
+
+# New v2 endpoints
+@app.get("/descriptors_v2", response_model=Dict[str, List[List[float]]])
+def get_descriptors_v2():
+    out: Dict[str, List[List[float]]] = {}
+    for d in flat_descriptors:
+        out.setdefault(d["artwork_id"], []).append(d["embedding"])
+    return out
+
+@app.get("/descriptors_meta_v2")
+def get_descriptors_meta_v2():
+    return [
+        {
+            "artwork_id": d["artwork_id"],
+            "descriptor_id": d.get("descriptor_id"),
+            "image_path": d.get("image_path"),
+            "embedding": d.get("embedding"),
+        }
+        for d in flat_descriptors
+    ]
 
 
 @app.post("/items", response_model=Item)
@@ -211,16 +315,16 @@ def upsert_item(item: Item):
 @app.post("/match", response_model=MatchResponse)
 def match(req: MatchRequest):
     global db_dim
-    if not items:
+    if not flat_descriptors:
         raise HTTPException(status_code=503, detail="Empty database")
     q = np.asarray(req.embedding, dtype=np.float32)
     if q.ndim != 1:
         q = q.reshape(-1)
     if db_dim is None:
-        # infer from first item with embedding
-        for it in items:
-            if isinstance(it.get("embedding"), list):
-                db_dim = len(it["embedding"])
+        # infer from first descriptor
+        for d in flat_descriptors:
+            if isinstance(d.get("embedding"), list):
+                db_dim = len(d["embedding"])
                 break
     if db_dim is None:
         raise HTTPException(status_code=503, detail="Database embeddings dimension unknown")
@@ -228,32 +332,43 @@ def match(req: MatchRequest):
         raise HTTPException(status_code=400, detail=f"Embedding dim mismatch: got {q.shape[0]}, expected {db_dim}")
     q = _l2_normalize(q)
 
-    scores = []
-    for it in items:
-        emb = it.get("embedding")
-        if not isinstance(emb, list):
+    # score per descriptor, keep best per artwork
+    best_per_artwork: Dict[str, Dict[str, Any]] = {}
+    for d in flat_descriptors:
+        v = np.asarray(d["embedding"], dtype=np.float32)
+        s = float(np.dot(q, v))
+        if s < req.threshold:
             continue
-        v = np.asarray(emb, dtype=np.float32)
-        s = float(np.dot(q, v))  # cosine similarity (normalized)
-        if s >= req.threshold:
-            scores.append((s, it))
+        art_id = d["artwork_id"]
+        cur = best_per_artwork.get(art_id)
+        if cur is None or s > cur["score"]:
+            best_per_artwork[art_id] = {"score": s, "descriptor": d}
 
-    scores.sort(key=lambda x: x[0], reverse=True)
-    top = scores[: req.top_k]
-    matches = [
-        MatchItem(
-            id=str(it.get("id")) if it.get("id") is not None else None,
-            title=it.get("title"),
-            artist=it.get("artist"),
-            year=it.get("year"),
-            museum=it.get("museum"),
-            location=it.get("location"),
-            description=it.get("description"),
-            confidence=float(s),
-        )
-        for s, it in top
-    ]
-    return MatchResponse(matches=matches)
+    ranked = sorted(best_per_artwork.items(), key=lambda x: x[1]["score"], reverse=True)[: req.top_k]
+
+    lang = (req.lang or '').lower()[:2] if req.lang else None
+    results: List[MatchItem] = []
+    for art_id, info in ranked:
+        art = artworks.get(art_id, {})
+        desc_text = None
+        desc_map = art.get("descriptions") if isinstance(art.get("descriptions"), dict) else None
+        if desc_map:
+            if lang and desc_map.get(lang):
+                desc_text = desc_map.get(lang)
+            else:
+                desc_text = desc_map.get('it') or desc_map.get('en') or next(iter(desc_map.values()), None)
+        d = info["descriptor"]
+        results.append(MatchItem(
+            artwork_id=art_id,
+            descriptor_id=d.get("descriptor_id"),
+            title=art.get("title"),
+            artist=art.get("artist"),
+            description=desc_text,
+            confidence=float(info["score"]),
+            image_path=d.get("image_path"),
+        ))
+
+    return MatchResponse(matches=results)
 
 
 # ----------------------------------------------------------------------------

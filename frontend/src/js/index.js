@@ -2,8 +2,55 @@ import { appEl, videoEl, canvasEl, hudEl, startBtn, statusEl, infoEl, detailEl, 
 import { status as setStatus, showInfo, hideHint, clearHotspots, clientPointToVideo, pointInBox } from './ui.js';
 import { initDetector, detector, closeDetector } from './detection.js';
 import { initEmbeddingModel } from './embedding.js';
-import { loadArtworkDB } from './db.js';
+import { loadArtworkDB, pickLangText, getLang, setLang } from './db.js';
 import { drawDetections, getLastMatches, resetRenderState } from './render.js';
+
+// Language toggle setup
+function initLanguageToggle() {
+  const current = getLang();
+  const btnIt = document.querySelector('.lang-toggle button[data-lang="it"]');
+  const btnEn = document.querySelector('.lang-toggle button[data-lang="en"]');
+  const all = [btnIt, btnEn].filter(Boolean);
+  function updateActive() {
+    const lang = getLang();
+    all.forEach(b => b && b.classList.toggle('active', b.dataset.lang === lang));
+  }
+  all.forEach(b => b && b.addEventListener('click', () => {
+    const chosen = b.dataset.lang;
+    setLang(chosen);
+    updateActive();
+    applyLanguageToUI();
+  }));
+  updateActive();
+}
+
+function applyLanguageToUI() {
+  const lang = getLang();
+  const t = {
+    it: {
+      title: "Scopri l'arte intorno a te",
+      status: "Inquadra le opere con la fotocamera",
+      start: "Avvia",
+      back: "Torna alla Fotocamera",
+    },
+    en: {
+      title: "Discover art around you",
+      status: "Point the camera at artworks",
+      start: "Start",
+      back: "Back to Camera",
+    }
+  }[lang] || {};
+
+  const titleEl = document.querySelector('.card-title');
+  if (titleEl && t.title) titleEl.textContent = t.title;
+  if (statusEl && t.status) statusEl.textContent = t.status;
+  if (startBtn && t.start) startBtn.textContent = t.start;
+  if (backBtn && t.back) backBtn.textContent = t.back;
+}
+
+// Initialize language on module load
+initLanguageToggle();
+applyLanguageToUI();
 
 let stream = null;
 let running = false;
@@ -25,7 +72,8 @@ function openDetail(entry, confidence) {
   if (entry?.year) meta += (meta ? ' · ' : '') + entry.year;
   if (entry?.museum || entry?.location) meta += (meta ? ' · ' : '') + (entry.museum || entry.location);
   if (detailMetaEl) detailMetaEl.textContent = meta;
-  if (detailBodyEl) detailBodyEl.textContent = entry?.description || '';
+  const desc = entry?.descriptions ? pickLangText(entry.descriptions) : (entry?.description || '');
+  if (detailBodyEl) detailBodyEl.textContent = desc;
   if (detailEl) detailEl.classList.remove('hidden');
   running = false;
   try { const ctx = canvasEl.getContext('2d'); ctx.clearRect(0, 0, canvasEl.width, canvasEl.height); } catch {}

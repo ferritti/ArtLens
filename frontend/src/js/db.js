@@ -4,6 +4,34 @@ import { ensureRuntimeDim, getRuntimeDim } from './embedding.js';
 export let artworkDB = [];
 export let dbDim = null;
 
+// Language state
+let _lang = null;
+export function getLang() {
+  if (_lang) return _lang;
+  try {
+    const stored = localStorage.getItem('lang');
+    if (stored) _lang = stored;
+  } catch {}
+  if (!_lang && typeof navigator !== 'undefined') {
+    const nav = (navigator.language || 'it').slice(0,2).toLowerCase();
+    _lang = (nav === 'en') ? 'en' : 'it';
+  }
+  if (!_lang) _lang = 'it';
+  return _lang;
+}
+export function setLang(l) {
+  const v = (l || '').slice(0,2).toLowerCase();
+  _lang = (v === 'en') ? 'en' : 'it';
+  try { localStorage.setItem('lang', _lang); } catch {}
+  return _lang;
+}
+
+export function pickLangText(descriptions, preferred) {
+  if (!descriptions || typeof descriptions !== 'object') return null;
+  const lang = (preferred || getLang() || 'it').slice(0,2).toLowerCase();
+  return descriptions[lang] || descriptions.it || descriptions.en || Object.values(descriptions)[0] || null;
+}
+
 function normalizeEmbedding(vec) {
   if (!Array.isArray(vec)) return null;
   const norm = Math.hypot(...vec);
@@ -36,6 +64,43 @@ function toArrayFromCatalog(data) {
     return Object.entries(data).map(([id, v]) => ({ id, ...v }));
   }
   return [];
+}
+
+async function loadOptionB_v2() {
+  const [catRes, descRes] = await Promise.all([
+    fetch(`${BACKEND_URL}/catalog`, { cache: 'no-store' }),
+    fetch(`${BACKEND_URL}/descriptors_v2`, { cache: 'no-store' })
+  ]);
+  if (!catRes.ok || !descRes.ok) {
+    throw new Error(`/catalog or /descriptors_v2 not available (${catRes.status}, ${descRes.status})`);
+  }
+  const catalog = await catRes.json(); // array of artworks
+  const descMap = await descRes.json(); // { artwork_id: [ [..emb1..], [..emb2..] ] }
+
+  const flattened = [];
+  for (const art of Array.isArray(catalog) ? catalog : []) {
+    const artId = art?.id != null ? String(art.id) : (art?.title != null ? String(art.title) : null);
+    if (!artId) continue;
+    const embs = Array.isArray(descMap?.[artId]) ? descMap[artId] : [];
+    for (let i = 0; i < embs.length; i++) {
+      const emb = embs[i];
+      const norm = normalizeEmbedding(emb);
+      if (!norm) continue;
+      flattened.push({
+        id: `${artId}#${i}`,
+        parentId: artId,
+        title: art.title,
+        artist: art.artist,
+        year: art.year,
+        museum: art.museum,
+        location: art.location,
+        descriptions: art.descriptions,
+        image_path: art?.visual_descriptors?.[i]?.image_path,
+        embedding: norm,
+      });
+    }
+  }
+  return flattened;
 }
 
 async function loadOptionB() {
@@ -78,16 +143,21 @@ async function loadFallbackItems() {
 }
 
 export async function loadArtworkDB() {
+  // Prefer v2 endpoints
   try {
-    // Try Option B first
-    artworkDB = await loadOptionB();
-  } catch (e) {
-    console.warn('Option B endpoints not available or failed. Falling back to /items. Reason:', e?.message || e);
+    artworkDB = await loadOptionB_v2();
+  } catch (eV2) {
+    console.warn('V2 endpoints not available. Trying legacy Option B. Reason:', eV2?.message || eV2);
     try {
-      artworkDB = await loadFallbackItems();
-    } catch (e2) {
-      console.warn('Fallback /items load failed:', e2);
-      artworkDB = [];
+      artworkDB = await loadOptionB();
+    } catch (e) {
+      console.warn('Legacy Option B failed. Falling back to /items. Reason:', e?.message || e);
+      try {
+        artworkDB = await loadFallbackItems();
+      } catch (e2) {
+        console.warn('Fallback /items load failed:', e2);
+        artworkDB = [];
+      }
     }
   }
 
