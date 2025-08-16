@@ -30,20 +30,20 @@ function roundRectPath(ctx, x, y, w, h, r) {
 }
 
 function drawRoundedBox(ctx, x, y, w, h) {
-  const r = Math.max(6, Math.round(Math.min(w, h) * 0.08));
-  roundRectPath(ctx, x + 0.5, y + 0.5, Math.max(1, w - 1), Math.max(1, h - 1), r);
+  ctx.beginPath();
+  ctx.rect(x + 0.5, y + 0.5, Math.max(1, w - 1), Math.max(1, h - 1));
   ctx.fill();
   ctx.stroke();
 }
 
 function drawBestGlow(ctx, x, y, w, h) {
   ctx.save();
-  const r = Math.max(6, Math.round(Math.min(w, h) * 0.1));
   ctx.lineWidth = 3;
   ctx.shadowBlur = 16;
   ctx.shadowColor = 'rgba(197,164,109,0.65)';
   ctx.strokeStyle = 'rgba(197,164,109,0.9)';
-  roundRectPath(ctx, x, y, w, h, r);
+  ctx.beginPath();
+  ctx.rect(x, y, w, h);
   ctx.stroke();
   ctx.restore();
 }
@@ -58,21 +58,22 @@ function drawCapsuleLabel(ctx, x, y, text, badge) {
   const badgeW = badgeText ? Math.round(ctx.measureText(badgeText).width) + badgePadX * 2 : 0;
   const h = 18 + padY * 2;
   const w = textW + padX * 2 + (badgeW ? (badgeW + 8) : 0);
-  // Background capsule
+  // Background rectangular label
   ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--label-bg') || 'rgba(0,0,0,0.6)';
   ctx.strokeStyle = 'transparent';
-  roundRectPath(ctx, x, y, w, h, Math.ceil(h / 2));
+  ctx.beginPath();
+  ctx.rect(x, y, w, h);
   ctx.fill();
   // Text
   ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--label-fg') || '#fff';
   ctx.fillText(text, x + padX, y + padY + 12);
-  // Badge
+  // Badge (rectangular)
   if (badgeW) {
     const bx = x + padX + textW + 8;
     const by = y + 4;
-    ctx.fillStyle = 'linear-gradient(180deg, #c5a46d, #b89558)'; // browsers ignore gradients via fillStyle string; fallback solid
     ctx.fillStyle = '#c5a46d';
-    roundRectPath(ctx, bx, by, badgeW, h - 8, Math.ceil((h - 8) / 2));
+    ctx.beginPath();
+    ctx.rect(bx, by, badgeW, h - 8);
     ctx.fill();
     ctx.fillStyle = '#221a10';
     ctx.fillText(badgeText, bx + badgePadX, y + padY + 12);
@@ -134,8 +135,6 @@ export async function drawDetections(ctx, result, onHotspotClick) {
           drawCapsuleLabel(ctx, Math.round(box.originX), Math.max(0, Math.round(box.originY - 28)), entry.title || 'Artwork', pct);
 
           // Show placard with localized description
-          const desc = entry?.descriptions ? pickLangText(entry.descriptions) : (entry?.description || '');
-          showInfo(entry.title || 'Artwork', desc || '', confidence);
 
           const key = (entry && (entry.id != null ? String(entry.id) : (entry.title || '')));
           if (key && key !== lastRecognizedKey) {
@@ -240,14 +239,10 @@ export async function drawDetections(ctx, result, onHotspotClick) {
       showHintFor(best.entry, best.box);
     }
     // Show placard with localized description
-    const desc = best.entry?.descriptions ? pickLangText(best.entry.descriptions) : (best.entry?.description || '');
-    showInfo(best.entry?.title || 'Artwork', desc || '', best.confidence);
   } else if (stickyBest && t < stickyBest.until && stickyBest.confidence >= (COSINE_THRESHOLD - HYSTERESIS_DROP)) {
     // Keep last best briefly to avoid flicker
     const b = stickyBest;
     drawBestGlow(ctx, b.box.originX, b.box.originY, b.box.width, b.box.height);
-    const desc = b.entry?.descriptions ? pickLangText(b.entry.descriptions) : (b.entry?.description || '');
-    showInfo(b.entry?.title || 'Artwork', desc || '', b.confidence);
   } else {
     stickyBest = null;
     lastRecognizedKey = null;
