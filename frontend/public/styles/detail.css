@@ -25,7 +25,7 @@
   border: 1px solid rgba(26,28,26,0.08);
   box-shadow: var(--shadow-xl);
   padding: 10px 18px calc( env(safe-area-inset-bottom) + 16px );
-  animation: fadeInUp 360ms ease both;
+  animation: none;
   transition: transform 240ms ease;
   -webkit-overflow-scrolling: touch; /* smooth scroll on iOS */
   touch-action: pan-y; /* enable scroll in sheet */
@@ -52,3 +52,17 @@
 .detail-body { color: #333; font-size: 15px; line-height: 1.6; }
 .detail-actions { margin-top: 14px; display: flex; justify-content: center; }
 .detail .back { background: linear-gradient(180deg, var(--accent), #b89558); color: var(--accent-ink); padding: 12px 18px; border-radius: 999px; font-weight: 700; box-shadow: var(--shadow-md); }
+
+/* Premium open/close animation states */
+.detail.open {
+  animation: overlayFade 220ms ease both;
+}
+.detail.open .detail-card {
+  animation: premiumSheetIn 440ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.detail.closing {
+  animation: overlayFade 200ms ease reverse both;
+}
+.detail.closing .detail-card {
+  animation: premiumSheetOut 220ms ease both;
+}

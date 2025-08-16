@@ -7,3 +7,35 @@
   0% { box-shadow: 0 0 0 0 rgba(197,164,109,0.5); }
   100% { box-shadow: 0 0 0 14px rgba(197,164,109,0); }
 }
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translate3d(0, 8px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+@keyframes pulse {
+  0% { box-shadow: 0 0 0 0 rgba(197,164,109,0.5); }
+  100% { box-shadow: 0 0 0 14px rgba(197,164,109,0); }
+}
+
+/* Premium overlay fade for detail */
+@keyframes overlayFade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+/* Premium, subtle spring-in for the sheet */
+@keyframes premiumSheetIn {
+  0%   { opacity: 0; transform: translate3d(0, 24px, 0) scale(0.985); filter: saturate(0.96); }
+  60%  { opacity: 1; transform: translate3d(0, -2px, 0) scale(1.002); }
+  100% { opacity: 1; transform: translate3d(0, 0, 0) scale(1); filter: saturate(1); }
+}
+
+/* Premium close animation (optional) */
+@keyframes premiumSheetOut {
+  0%   { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+  100% { opacity: 0; transform: translate3d(0, 20px, 0) scale(0.98); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; }
+}

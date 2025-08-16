@@ -128,18 +128,35 @@ function openDetail(entry, confidence) {
   if (detailMetaEl) detailMetaEl.textContent = meta;
   const desc = entry?.descriptions ? pickLangText(entry.descriptions) : (entry?.description || '');
   if (detailBodyEl) detailBodyEl.textContent = desc;
-  if (detailEl) detailEl.classList.remove('hidden');
+  if (detailEl) {
+    detailEl.classList.remove('hidden', 'closing');
+    // Force reflow to ensure animation restarts
+    void detailEl.offsetWidth;
+    detailEl.classList.add('open');
+  }
   // Ensure the sheet starts from top and is fully visible when content fits
   try {
     const sheet = document.querySelector('.detail-card');
-    if (sheet) sheet.scrollTop = 0;
+    if (sheet) { sheet.scrollTop = 0; sheet.style.transform = ''; }
   } catch {}
   running = false;
   try { const ctx = canvasEl.getContext('2d'); ctx.clearRect(0, 0, canvasEl.width, canvasEl.height); } catch {}
 }
 
 function closeDetail() {
-  if (detailEl) detailEl.classList.add('hidden');
+  if (detailEl) {
+    // play graceful closing animation
+    detailEl.classList.remove('open');
+    detailEl.classList.add('closing');
+    const end = () => {
+      detailEl.classList.add('hidden');
+      detailEl.classList.remove('closing');
+      try { detailEl.removeEventListener('animationend', end); } catch {}
+    };
+    try { detailEl.addEventListener('animationend', end, { once: true }); } catch {}
+    // Fallback in case animationend doesn't fire
+    setTimeout(() => { try { end(); } catch {} }, 260);
+  }
   try { hideHint(); } catch {}
   try { showInfo(null); } catch {}
   try { clearHotspots(); } catch {}
