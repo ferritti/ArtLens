@@ -1,4 +1,5 @@
 import { appEl, videoEl, hintEl, hotspotsEl, infoEl } from './dom.js';
+import { getLang } from './db.js';
 
 let hintHideTimer = null;
 
@@ -19,7 +20,8 @@ export function showInfo(name, description, confidence) {
 }
 
 export function showHintFor(entry, box) {
-  const text = "Tocca l’opera";
+  const lang = getLang();
+  const text = lang === 'en' ? 'Tap the artwork' : 'Tocca l’opera';
   if (hintEl) {
     hintEl.textContent = text;
     placeHintOverBox(box);
