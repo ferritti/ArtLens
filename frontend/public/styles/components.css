@@ -178,8 +178,8 @@ button:disabled { opacity: 0.6; cursor: default; }
 
 /* Hand icon hotspot variant */
 .hotspot.hand {
-  width: 88px;
-  height: 88px;
+  width: 80px;
+  height: 80px;
   background: transparent;
   border: 0;
   box-shadow: none;
@@ -189,7 +189,7 @@ button:disabled { opacity: 0.6; cursor: default; }
 }
 .hotspot.hand::before { content: none; display: none; }
 .hotspot.hand img {
-  width: 80px;
+  width: 72px;
   height: auto;
   display: block;
   pointer-events: none;
