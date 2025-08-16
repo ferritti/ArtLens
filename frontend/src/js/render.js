@@ -3,7 +3,6 @@ import { clearHotspots, renderHotspot, placeHintOverBox, showHintFor, hideHint, 
 import { cropToCanvasFromVideo, embedFromCanvas, cosineSim, hasEmbedModel } from './embedding.js';
 import { artworkDB, dbDim } from './db.js';
 import { COSINE_THRESHOLD, DEBUG_FALLBACK_CROP, MAX_BOXES_PER_FRAME, MIN_BOX_SCORE } from './constants.js';
-import { matchOnServer } from './backend.js';
 
 let lastMatches = [];
 let lastRecognizedKey = null;
@@ -49,19 +48,7 @@ export async function drawDetections(ctx, result, onHotspotClick) {
         const box = { originX: w * 0.25, originY: h * 0.25, width: w * 0.5, height: h * 0.5 };
         const crop = cropToCanvasFromVideo(box);
         const emb = embedFromCanvas(crop);
-        let matched = null;
-        try {
-          const matches = await matchOnServer(emb, 1, COSINE_THRESHOLD);
-          if (matches && matches.length) {
-            const m = matches[0];
-            matched = { entry: m, confidence: m.confidence };
-          }
-        } catch (err) {
-          // server failed; will fallback to local DB
-        }
-        if (!matched) {
-          matched = findBestMatch(emb);
-        }
+        const matched = findBestMatch(emb);
         if (matched && matched.confidence >= COSINE_THRESHOLD) {
           const { entry, confidence } = matched;
           lastMatches.push({ entry, confidence, box });
@@ -158,18 +145,7 @@ export async function drawDetections(ctx, result, onHotspotClick) {
         if (hasEmbedModel()) {
           const crop = cropToCanvasFromVideo(det.boundingBox);
           const emb = embedFromCanvas(crop);
-          try {
-            const matches = await matchOnServer(emb, 1, COSINE_THRESHOLD);
-            if (matches && matches.length) {
-              const m = matches[0];
-              matched = { entry: m, confidence: m.confidence };
-            }
-          } catch (err) {
-            // backend unavailable or error; fallback to local matching
-          }
-          if (!matched) {
-            matched = findBestMatch(emb);
-          }
+          matched = findBestMatch(emb);
         }
       } catch (e) {
         console.warn('Embedding/match failed:', e);
