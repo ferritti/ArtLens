@@ -1,6 +1,6 @@
 /* Detail bottom sheet overlay */
 .detail {
-  position: absolute;
+  position: fixed;
   inset: 0;
   z-index: 10;
   display: flex;
@@ -9,11 +9,12 @@
   padding: 0 16px 0; /* bottom padding handled by sheet */
   background: linear-gradient(180deg, rgba(14,15,18,0.35), rgba(14,15,18,0.55));
   backdrop-filter: blur(10px) saturate(1.04);
+  touch-action: pan-y; /* allow vertical interactions despite parent touch-action */
 }
 .detail-card {
   margin: 0 auto;
   width: min(94vw, 720px);
-  max-height: 70vh;
+  max-height: min(70vh, 70dvh);
   overflow: auto;
   background: linear-gradient(180deg, rgba(245,243,239,0.98), rgba(245,243,239,0.90));
   color: #1a1c1a;
@@ -24,6 +25,8 @@
   animation: fadeInUp 360ms ease both;
   transition: transform 240ms ease;
   -webkit-overflow-scrolling: touch; /* smooth scroll on iOS */
+  touch-action: pan-y; /* enable scroll in sheet */
+  overscroll-behavior-y: contain; /* prevent background scrolling/bounce */
 }
 /* Handle bar */
 .detail-card::before {
