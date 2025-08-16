@@ -4,9 +4,9 @@
   inset: 0;
   z-index: 10;
   display: flex;
-  align-items: flex-end; /* anchor sheet to bottom */
+  align-items: center; /* center vertically */
   justify-content: center;
-  padding: 0 16px 0; /* bottom padding handled by sheet */
+  padding: calc(env(safe-area-inset-top) + 16px) 16px calc(env(safe-area-inset-bottom) + 16px);
   background: linear-gradient(180deg, rgba(14,15,18,0.35), rgba(14,15,18,0.55));
   backdrop-filter: blur(10px) saturate(1.04);
   touch-action: pan-y; /* allow vertical interactions despite parent touch-action */
@@ -18,7 +18,7 @@
   overflow: auto;
   background: linear-gradient(180deg, rgba(245,243,239,0.98), rgba(245,243,239,0.90));
   color: #1a1c1a;
-  border-radius: 16px 16px 0 0; /* rounded top corners like a sheet */
+  border-radius: var(--radius-card);
   border: 1px solid rgba(26,28,26,0.08);
   box-shadow: var(--shadow-xl);
   padding: 10px 18px calc( env(safe-area-inset-bottom) + 16px );
