@@ -1,5 +1,6 @@
 import { appEl, videoEl, hintEl, hotspotsEl, infoEl } from './dom.js';
 import { getLang } from './db.js';
+import { BACKEND_URL } from './constants.js';
 
 let hintHideTimer = null;
 
@@ -122,7 +123,7 @@ export function renderHotspot(match, onClick) {
   // Otherwise, render a fresh hotspot
   hotspotsEl.innerHTML = '';
   const hs = document.createElement('div');
-  hs.className = 'hotspot pulse';
+  hs.className = 'hotspot hand';
   hs.dataset.key = key;
   hs.style.left = `${pt.x}px`;
   hs.style.top = `${pt.y}px`;
@@ -131,6 +132,13 @@ export function renderHotspot(match, onClick) {
   const lang = getLang();
   const aria = lang === 'en' ? 'Open artwork details' : 'Apri dettagli opera';
   hs.setAttribute('aria-label', aria);
+
+  // Insert hand icon image served by backend
+  const img = document.createElement('img');
+  img.src = `${BACKEND_URL}/images/hand.png`;
+  img.alt = '';
+  img.draggable = false;
+  hs.appendChild(img);
 
   const handle = (ev) => {
     try { ev.preventDefault(); ev.stopPropagation(); } catch {}

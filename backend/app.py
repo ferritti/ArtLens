@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional, Dict, Any
 import os
@@ -36,6 +37,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Serve static images (e.g., hotspot icon) from backend/images at /images
+IMAGES_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "images"))
+if os.path.isdir(IMAGES_DIR):
+    app.mount("/images", StaticFiles(directory=IMAGES_DIR), name="images")
 
 # ----------------------------------------------------------------------------
 # In-memory DB
