@@ -129,6 +129,11 @@ function openDetail(entry, confidence) {
   const desc = entry?.descriptions ? pickLangText(entry.descriptions) : (entry?.description || '');
   if (detailBodyEl) detailBodyEl.textContent = desc;
   if (detailEl) detailEl.classList.remove('hidden');
+  // Ensure the sheet starts from top and is fully visible when content fits
+  try {
+    const sheet = document.querySelector('.detail-card');
+    if (sheet) sheet.scrollTop = 0;
+  } catch {}
   running = false;
   try { const ctx = canvasEl.getContext('2d'); ctx.clearRect(0, 0, canvasEl.width, canvasEl.height); } catch {}
 }
