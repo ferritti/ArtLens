@@ -135,9 +135,11 @@ export function renderHotspot(match, onClick) {
 
   // Insert hand icon image served by backend
   const img = document.createElement('img');
-  img.src = `${BACKEND_URL}/images/hand.png`;
+  img.src = 'images/hand.png';
   img.alt = '';
   img.draggable = false;
+  // Fallback to backend-hosted image if local asset missing
+  img.onerror = () => { try { img.onerror = null; img.src = `${BACKEND_URL}/images/hand.png`; } catch {} };
   hs.appendChild(img);
 
   const handle = (ev) => {
