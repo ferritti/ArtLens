@@ -48,9 +48,63 @@ function applyLanguageToUI() {
   if (backBtn && t.back) backBtn.textContent = t.back;
 }
 
+// Bottom sheet gestures (swipe-to-close)
+function initBottomSheetGestures() {
+  const sheet = document.querySelector('.detail-card');
+  if (!sheet) return;
+  let dragging = false;
+  let startY = 0;
+  let lastY = 0;
+  let hasMoved = false;
+
+  const onPointerDown = (e) => {
+    if (e.pointerType === 'mouse' && e.button !== 0) return;
+    // Only start drag if at top of scroll
+    if (sheet.scrollTop > 0) return;
+    dragging = true;
+    hasMoved = false;
+    startY = (e.touches ? e.touches[0].clientY : e.clientY) || 0;
+    lastY = startY;
+    sheet.style.transition = 'none';
+    window.addEventListener('pointermove', onPointerMove, { passive: false });
+    window.addEventListener('pointerup', onPointerUp, { passive: true, once: true });
+    window.addEventListener('pointercancel', onPointerUp, { passive: true, once: true });
+  };
+
+  const onPointerMove = (e) => {
+    if (!dragging) return;
+    const y = (e.touches ? e.touches[0].clientY : e.clientY) || 0;
+    const dy = Math.max(0, y - startY);
+    if (dy > 2) hasMoved = true;
+    // Prevent page scroll while dragging sheet
+    try { e.preventDefault(); } catch {}
+    sheet.style.transform = `translateY(${dy}px)`;
+  };
+
+  const onPointerUp = (e) => {
+    window.removeEventListener('pointermove', onPointerMove, { passive: false });
+    dragging = false;
+    const endY = (e.changedTouches ? e.changedTouches[0].clientY : e.clientY) || lastY;
+    const dy = Math.max(0, endY - startY);
+    sheet.style.transition = '';
+    if (dy > 120) {
+      // Close
+      sheet.style.transform = `translateY(100vh)`;
+      setTimeout(() => { try { sheet.style.transform = ''; } catch {}; try { closeDetail(); } catch {}; }, 180);
+    } else {
+      // Snap back
+      sheet.style.transform = 'translateY(0)';
+    }
+  };
+
+  // Use pointer events when available
+  sheet.addEventListener('pointerdown', onPointerDown, { passive: true });
+}
+
 // Initialize language on module load
 initLanguageToggle();
 applyLanguageToUI();
+initBottomSheetGestures();
 
 let stream = null;
 let running = false;
