@@ -1,5 +1,5 @@
 // Centralized constants and thresholds
-export const MODEL_URL = "models/new_model.tflite"; // path to tflite model relative to public/
+export const MODEL_URL = "models/last_model.tflite"; // path to tflite model relative to public/
 
 // Backend API base URL
 export const BACKEND_URL = (typeof window !== 'undefined' && window.BACKEND_URL) || "http://localhost:8000";
