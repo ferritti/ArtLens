@@ -94,3 +94,11 @@
   -webkit-overflow-scrolling: touch;
   touch-action: auto;
 }
+
+
+/* Group right-side controls in topbar (lang toggle + admin button) */
+.topbar .rightbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
