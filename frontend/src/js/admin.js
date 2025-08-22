@@ -51,9 +51,6 @@ async function onSubmit(e) {
   setLoading(true);
   setStatus('Preparazione modello…');
   try {
-    const id = (fd.get('id') || '').trim();
-    if (!id) { alert('Specifica un ID'); return; }
-
     const filesInput = /** @type {HTMLInputElement} */ (document.querySelector('input[name="images"]'));
     const files = filesInput?.files;
     if (!files || !files.length) { alert('Seleziona almeno un’immagine'); return; }
@@ -72,7 +69,6 @@ async function onSubmit(e) {
     }
 
     const payload = {
-      id,
       title: (fd.get('title') || '').trim() || null,
       artist: (fd.get('artist') || '').trim() || null,
       year: (fd.get('year') || '').trim() || null,
@@ -103,8 +99,9 @@ async function onSubmit(e) {
       const t = await res.text();
       throw new Error(`${res.status} ${t}`);
     }
+    const json = await res.json().catch(() => ({}));
     setStatus('Operazione completata.');
-    alert(`Opera salvata con successo! (${visual_descriptors.length} immagini/embedding)`);
+    alert(`Opera salvata!\nID: ${json.id || '(generato)'}\nDescrittori: ${visual_descriptors.length}`);
     form.reset();
   } catch (err) {
     console.error('Admin save error:', err);

@@ -420,7 +420,7 @@ def match(req: MatchRequest):
 # Supabase admin + health DB
 # -----------------------------
 class ArtworkUpsert(BaseModel):
-    id: str
+    id: Optional[str] = None
     title: Optional[str] = None
     artist: Optional[str] = None
     year: Optional[str] = None
@@ -431,12 +431,42 @@ class ArtworkUpsert(BaseModel):
     model_config = ConfigDict(extra='allow')
 
 
+import re, unicodedata
+
+def _slugify(text: str) -> str:
+    if not text:
+        return "opera"
+    s = unicodedata.normalize('NFKD', text).encode('ascii', 'ignore').decode('ascii')
+    s = s.lower()
+    s = re.sub(r'[^a-z0-9]+', '-', s)
+    s = s.strip('-')
+    return s or "opera"
+
+
+def _ensure_unique_art_id(base_id: str) -> str:
+    candidate = base_id or "opera"
+    suffix = 2
+    while True:
+        row = run("select 1 from artworks where id = :id limit 1", {"id": candidate}).fetchone()
+        if not row:
+            return candidate
+        candidate = f"{base_id}-{suffix}" if base_id else f"opera-{suffix}"
+        suffix += 1
+
+
 @app.post("/artworks")
 def upsert_artwork(art: ArtworkUpsert, x_admin_token: str = Header(default="")):
     if not ADMIN_TOKEN or x_admin_token != ADMIN_TOKEN:
         raise HTTPException(status_code=401, detail="Unauthorized")
     try:
-        upsert_artwork_with_descriptors(art.model_dump())
+        art_dict = art.model_dump()
+        art_id = (art_dict.get("id") or "").strip() if isinstance(art_dict.get("id"), str) else None
+        if not art_id:
+            base = _slugify(art_dict.get("title") or "")
+            art_id = _ensure_unique_art_id(base)
+            art_dict["id"] = art_id
+
+        upsert_artwork_with_descriptors(art_dict)
         # Refresh in-memory cache from Supabase so /match reflects the latest data
         try:
             _refresh_cache_from_db()
@@ -448,7 +478,7 @@ def upsert_artwork(art: ArtworkUpsert, x_admin_token: str = Header(default="")):
     except Exception as e:
         print("[ArtLens] upsert error:", e)
         raise HTTPException(status_code=500, detail="Failed to persist")
-    return {"status": "ok", "id": art.id}
+    return {"status": "ok", "id": art_id}
 
 
 @app.get("/health_db")
