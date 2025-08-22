@@ -224,7 +224,8 @@ button:disabled { opacity: 0.6; cursor: default; }
   position: static;
   inset: auto;
   display: block;
-  padding: env(safe-area-inset-top) 16px calc(env(safe-area-inset-bottom) + 24px) 16px;
+  /* Add extra top padding to clear the topbar on small screens */
+  padding: calc(env(safe-area-inset-top) + 80px) 16px calc(env(safe-area-inset-bottom) + 24px) 16px;
 }
 #admin .card {
   margin: 24px auto;
