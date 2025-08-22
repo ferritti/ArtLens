@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, ConfigDict
@@ -24,6 +24,11 @@ DEFAULT_ORIGINS = [
     "http://127.0.0.1:3000",
 ]
 FRONTEND_ORIGINS = [o.strip() for o in os.getenv("FRONTEND_ORIGINS", ",".join(DEFAULT_ORIGINS)).split(",") if o.strip()]
+
+# Supabase integration imports and admin token
+from .db import run
+from .service import upsert_artwork_with_descriptors
+ADMIN_TOKEN = os.getenv("ADMIN_TOKEN")
 
 # ----------------------------------------------------------------------------
 # App
@@ -251,28 +256,37 @@ class CatalogItem(BaseModel):
 
 @app.get("/catalog", response_model=List[CatalogItem])
 def get_catalog():
-    # Return artworks metadata (no embeddings), as loaded from v2 DB
-    return list(artworks.values())
+    rows = run(
+        """
+        select id, title, artist, year, museum, location, descriptions
+        from artworks
+        order by title nulls last
+        """
+    ).mappings().all()
+    return [dict(r) for r in rows]
 
 
 @app.get("/descriptors", response_model=Dict[str, List[float]])
 def get_descriptors():
-    # Legacy: return a single embedding per artwork (first descriptor)
-    desc: Dict[str, List[float]] = {}
-    for it in items:
-        emb = it.get("embedding")
-        if isinstance(emb, list):
-            _id = it.get("id") or it.get("title")
-            if _id is not None:
-                desc[str(_id)] = emb
-    return desc
+    rows = run(
+        """
+        select distinct on (artwork_id) artwork_id, embedding
+        from descriptors
+        order by artwork_id, descriptor_id
+        """
+    ).all()
+    out: Dict[str, List[float]] = {}
+    for art_id, emb in rows:
+        out[str(art_id)] = list(emb)
+    return out
 
 # New v2 endpoints
 @app.get("/descriptors_v2", response_model=Dict[str, List[List[float]]])
 def get_descriptors_v2():
+    rows = run("select artwork_id, embedding from descriptors").all()
     out: Dict[str, List[List[float]]] = {}
-    for d in flat_descriptors:
-        out.setdefault(d["artwork_id"], []).append(d["embedding"])
+    for art_id, emb in rows:
+        out.setdefault(str(art_id), []).append(list(emb))
     return out
 
 @app.get("/descriptors_meta_v2")
@@ -385,3 +399,43 @@ def match(req: MatchRequest):
 #   export ART_DB_PATH=backend/data/artwork_database.json
 #   export FRONTEND_ORIGINS=http://localhost:5173
 # ----------------------------------------------------------------------------
+
+
+
+# -----------------------------
+# Supabase admin + health DB
+# -----------------------------
+class ArtworkUpsert(BaseModel):
+    id: str
+    title: Optional[str] = None
+    artist: Optional[str] = None
+    year: Optional[str] = None
+    museum: Optional[str] = None
+    location: Optional[str] = None
+    descriptions: Optional[Dict[str, str]] = None
+    visual_descriptors: Optional[List[Dict[str, Any]]] = None
+    model_config = ConfigDict(extra='allow')
+
+
+@app.post("/artworks")
+def upsert_artwork(art: ArtworkUpsert, x_admin_token: str = Header(default="")):
+    if not ADMIN_TOKEN or x_admin_token != ADMIN_TOKEN:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    try:
+        upsert_artwork_with_descriptors(art.model_dump())
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        print("[ArtLens] upsert error:", e)
+        raise HTTPException(status_code=500, detail="Failed to persist")
+    return {"status": "ok", "id": art.id}
+
+
+@app.get("/health_db")
+def health_db():
+    try:
+        row = run("select count(*) from artworks").fetchone()
+        cnt = int(row[0]) if row else 0
+        return {"db": "supabase", "artworks": cnt}
+    except Exception as e:
+        return {"db": "supabase", "error": str(e)}
