@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, ConfigDict
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Tuple
 import os
 import json
 import numpy as np
@@ -423,6 +423,12 @@ def upsert_artwork(art: ArtworkUpsert, x_admin_token: str = Header(default="")):
         raise HTTPException(status_code=401, detail="Unauthorized")
     try:
         upsert_artwork_with_descriptors(art.model_dump())
+        # Refresh in-memory cache from Supabase so /match reflects the latest data
+        try:
+            _refresh_cache_from_db()
+        except Exception as re:
+            # Log but do not fail the upsert response
+            print("[ArtLens] cache refresh error after upsert:", re)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -439,3 +445,63 @@ def health_db():
         return {"db": "supabase", "artworks": cnt}
     except Exception as e:
         return {"db": "supabase", "error": str(e)}
+
+
+# -----------------------------
+# Cache refresh from Supabase for /match
+# -----------------------------
+from typing import Tuple as _TupleAlias  # local alias to avoid shadowing
+
+def _refresh_cache_from_db() -> _TupleAlias[int, int]:
+    """Reload artworks and flat_descriptors from Supabase.
+    Returns (num_artworks, num_descriptors).
+    """
+    global artworks, flat_descriptors, db_dim
+
+    # Load artworks metadata
+    rows_art = run(
+        """
+        select id, title, artist, year, museum, location, descriptions
+        from artworks
+        """
+    ).mappings().all()
+    new_artworks = {str(r["id"]): dict(r) for r in rows_art}
+
+    # Load descriptors
+    rows_desc = run(
+        "select artwork_id, descriptor_id, image_path, embedding from descriptors order by artwork_id, descriptor_id"
+    ).all()
+
+    new_flat = []
+    dim = None
+    for art_id, desc_id, img, emb in rows_desc:
+        # emb is a PG float8[] mapped as Python list/tuple via psycopg/SQLAlchemy
+        vec = list(emb) if emb is not None else None
+        if not isinstance(vec, list):
+            continue
+        if dim is None:
+            dim = len(vec)
+        elif len(vec) != dim:
+            # Skip inconsistent dimensions
+            continue
+        new_flat.append({
+            "artwork_id": str(art_id),
+            "descriptor_id": str(desc_id),
+            "image_path": img,
+            "embedding": vec,
+        })
+
+    artworks = new_artworks
+    flat_descriptors = new_flat
+    db_dim = dim
+    return (len(artworks), len(flat_descriptors))
+
+
+# Refresh cache on startup so /match is ready without legacy JSON
+@app.on_event("startup")
+def _startup_refresh_cache():
+    try:
+        a, d = _refresh_cache_from_db()
+        print(f"[ArtLens] Cache loaded from Supabase: artworks={a}, descriptors={d}, dim={db_dim}")
+    except Exception as e:
+        print(f"[ArtLens] Failed to load cache from Supabase at startup: {e}")
