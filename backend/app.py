@@ -514,8 +514,14 @@ def _refresh_cache_from_db() -> _TupleAlias[int, int]:
 # Refresh cache on startup so /match is ready without legacy JSON
 @app.on_event("startup")
 def _startup_refresh_cache():
-    try:
-        a, d = _refresh_cache_from_db()
-        print(f"[ArtLens] Cache loaded from Supabase: artworks={a}, descriptors={d}, dim={db_dim}")
-    except Exception as e:
-        print(f"[ArtLens] Failed to load cache from Supabase at startup: {e}")
+    import time
+    tries = 3
+    for i in range(tries):
+        try:
+            a, d = _refresh_cache_from_db()
+            print(f"[ArtLens] Cache loaded from Supabase: artworks={a}, descriptors={d}, dim={db_dim}")
+            return
+        except Exception as e:
+            print(f"[ArtLens] Failed to load cache from Supabase at startup (attempt {i+1}/{tries}): {e}")
+            if i < tries - 1:
+                time.sleep(5)
