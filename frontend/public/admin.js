@@ -1,6 +1,15 @@
 import { initEmbeddingModel, embedFromCanvas } from '../src/js/embedding.js';
 import { BACKEND_URL, CROP_SIZE } from '../src/js/constants.js';
 
+const submitBtn = document.getElementById('submitBtn');
+const statusEl = document.getElementById('statusMsg');
+function setStatus(msg) {
+  if (statusEl) statusEl.textContent = msg || '';
+}
+function setLoading(loading) {
+  if (submitBtn) submitBtn.disabled = !!loading;
+}
+
 async function imageToCanvas224(file) {
   const can = document.createElement('canvas');
   can.width = can.height = CROP_SIZE;
@@ -39,19 +48,23 @@ async function onSubmit(e) {
   e.preventDefault();
   const form = e.currentTarget;
   const fd = new FormData(form);
+  setLoading(true);
+  setStatus('Preparazione modello…');
   try {
     const id = (fd.get('id') || '').trim();
-    if (!id) return alert('Specifica un ID');
+    if (!id) { alert('Specifica un ID'); return; }
 
     const filesInput = /** @type {HTMLInputElement} */ (document.querySelector('input[name="images"]'));
     const files = filesInput?.files;
-    if (!files || !files.length) return alert('Seleziona almeno un’immagine');
+    if (!files || !files.length) { alert('Seleziona almeno un’immagine'); return; }
 
-    // Init and compute embeddings locally
+    // Init model
     await initEmbeddingModel();
-    const visual_descriptors = [];
 
+    // Compute embeddings locally
+    const visual_descriptors = [];
     for (let i = 0; i < files.length; i++) {
+      setStatus(`Calcolo embedding ${i+1}/${files.length}…`);
       const f = files[i];
       const can = await imageToCanvas224(f);
       const embedding = embedFromCanvas(can); // already L2-normalized
@@ -69,12 +82,14 @@ async function onSubmit(e) {
       visual_descriptors,
     };
 
+    // Token admin
     const defaultToken = (typeof localStorage !== 'undefined' ? localStorage.getItem('X_ADMIN_TOKEN') : '') || '';
     let token = defaultToken || '';
     if (!token) token = prompt('Inserisci X-Admin-Token') || '';
-    if (!token) return alert('Token mancante. Operazione annullata.');
+    if (!token) { alert('Token mancante. Operazione annullata.'); return; }
     try { if (localStorage) localStorage.setItem('X_ADMIN_TOKEN', token); } catch {}
 
+    setStatus('Salvataggio in corso…');
     const res = await fetch(`${BACKEND_URL}/artworks`, {
       method: 'POST',
       headers: {
@@ -88,11 +103,16 @@ async function onSubmit(e) {
       const t = await res.text();
       throw new Error(`${res.status} ${t}`);
     }
+    setStatus('Operazione completata.');
     alert(`Opera salvata con successo! (${visual_descriptors.length} immagini/embedding)`);
     form.reset();
   } catch (err) {
     console.error('Admin save error:', err);
+    setStatus('Errore durante il salvataggio.');
     alert(`Errore durante il salvataggio: ${err?.message || err}`);
+  } finally {
+    setLoading(false);
+    setTimeout(() => setStatus(''), 1200);
   }
 }
 

@@ -2,55 +2,73 @@
 <html lang="it">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ArtLens – Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>ArtLens — Admin</title>
+  <link rel="stylesheet" href="styles/variables.css" />
+  <link rel="stylesheet" href="styles/base.css" />
+  <link rel="stylesheet" href="styles/animations.css" />
+  <link rel="stylesheet" href="styles/layout.css" />
+  <link rel="stylesheet" href="styles/components.css" />
+  <link rel="stylesheet" href="styles/detail.css" />
   <style>
-    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; padding: 16px; }
-    form { max-width: 640px; display: grid; gap: 12px; }
-    label { display: grid; gap: 6px; }
-    input, textarea, button { font: inherit; padding: 8px; }
-    textarea { min-height: 90px; }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .help { color: #666; font-size: 0.9em; }
+    /* Allow scrolling on admin page overriding global hidden overflow */
+    html, body { overflow: auto !important; height: auto !important; }
   </style>
 </head>
 <body>
-  <h1>Admin – Nuova Opera</h1>
-  <p class="help">Le immagini restano sul tuo dispositivo: vengono usate solo per calcolare gli embedding nel browser.</p>
-
-  <form id="f">
-    <label>ID
-      <input name="id" required placeholder="es. m9_giuditta" />
-    </label>
-    <label>Titolo
-      <input name="title" placeholder="Titolo dell'opera" />
-    </label>
-    <label>Autore
-      <input name="artist" placeholder="Nome autore" />
-    </label>
-    <div class="row">
-      <label>Anno
-        <input name="year" placeholder="es. 1620 ca." />
-      </label>
-      <label>Museo
-        <input name="museum" placeholder="es. Uffizi" />
-      </label>
+  <main class="stage" id="admin">
+    <div class="topbar">
+      <div class="brand">ArtLens <span class="badge">Admin</span></div>
+      <div class="actions">
+        <a href="./index.html"><button type="button" title="Apri App">Apri App</button></a>
+      </div>
     </div>
-    <label>Location
-      <input name="location" placeholder="Sala/Collocazione" />
-    </label>
-    <label>Descrizione IT
-      <textarea name="desc_it" placeholder="Descrizione in italiano"></textarea>
-    </label>
-    <label>Descrizione EN
-      <textarea name="desc_en" placeholder="Description in English"></textarea>
-    </label>
-    <label>Immagini (usate solo localmente per gli embedding)
-      <input type="file" name="images" accept="image/*" multiple required />
-      <small class="help">Puoi selezionare più immagini per la stessa opera.</small>
-    </label>
-    <button type="submit">Calcola embedding e salva</button>
-  </form>
+
+    <div class="hud">
+      <div class="card">
+        <div>
+          <div class="card-title">Nuova Opera</div>
+          <div class="subtitle">Le immagini restano sul tuo dispositivo: vengono usate solo per calcolare gli embedding nel browser.</div>
+        </div>
+
+        <form id="f" class="form">
+          <label>ID
+            <input name="id" required placeholder="es. m9_giuditta" />
+          </label>
+          <label>Titolo
+            <input name="title" placeholder="Titolo dell'opera" />
+          </label>
+          <label>Autore
+            <input name="artist" placeholder="Nome autore" />
+          </label>
+          <label>Anno
+            <input name="year" placeholder="es. 1620 ca." />
+          </label>
+          <label>Museo
+            <input name="museum" placeholder="es. Uffizi" />
+          </label>
+          <label>Location
+            <input name="location" placeholder="Sala/Collocazione" />
+          </label>
+          <label>Descrizione IT
+            <textarea name="desc_it" placeholder="Descrizione in italiano"></textarea>
+          </label>
+          <label>Descrizione EN
+            <textarea name="desc_en" placeholder="Description in English"></textarea>
+          </label>
+          <label>Immagini (usate solo localmente per gli embedding)
+            <input type="file" name="images" accept="image/*" multiple required />
+            <small class="subtitle">Puoi selezionare più immagini per la stessa opera.</small>
+          </label>
+
+          <div class="actions">
+            <button id="submitBtn" type="submit">Calcola embedding e salva</button>
+          </div>
+          <div id="statusMsg" class="status"></div>
+        </form>
+      </div>
+    </div>
+  </main>
 
   <!-- Configure backend URL (must be before module to match frontend) -->
   <script>window.BACKEND_URL='https://artlens-obss.onrender.com';</script>

@@ -206,3 +206,26 @@ button:disabled { opacity: 0.6; cursor: default; }
   50% { transform: scale(1.16); }
   100% { transform: scale(1); }
 }
+
+
+/* Admin form: premium vertical layout */
+.form { display: grid; gap: 14px; text-align: left; }
+.form label { display: grid; gap: 6px; font-weight: 600; font-size: 14px; color: var(--fg); }
+.form input, .form textarea { width: 100%; padding: 12px 14px; border-radius: 12px; background: rgba(20,22,27,0.62); color: var(--fg); border: 1px solid rgba(255,255,255,0.08); box-shadow: var(--shadow-md); }
+.form textarea { min-height: 110px; resize: vertical; }
+.form input::placeholder, .form textarea::placeholder { color: var(--muted); opacity: 0.85; }
+.form input:focus, .form textarea:focus { outline: none; border-color: rgba(197,164,109,0.6); box-shadow: 0 0 0 2px rgba(197,164,109,0.25), var(--shadow-xl); background: rgba(20,22,27,0.72); }
+.form .actions { margin-top: 8px; }
+.form small.help, .form small.subtitle, .form .subtitle { color: var(--muted); font-weight: 400; }
+
+
+/* Admin overrides: make HUD flow, enable scroll and center card */
+#admin .hud {
+  position: static;
+  inset: auto;
+  display: block;
+  padding: env(safe-area-inset-top) 16px calc(env(safe-area-inset-bottom) + 24px) 16px;
+}
+#admin .card {
+  margin: 24px auto;
+}

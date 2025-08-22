@@ -82,3 +82,15 @@
   text-transform: uppercase;
   border: 1px solid rgba(197,164,109,0.24);
 }
+
+/* Admin page: allow scrolling and override fixed stage */
+#admin.stage {
+  position: relative;
+  inset: auto;
+  width: 100%;
+  height: auto;
+  min-height: 100vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  touch-action: auto;
+}
