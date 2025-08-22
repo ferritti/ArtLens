@@ -177,7 +177,14 @@ def load_db() -> None:
         db_dim = None
 
 
-load_db()
+def _truthy_env(name: str, default: str = "false") -> bool:
+    return os.getenv(name, default).strip().lower() in ("1", "true", "yes", "on")
+
+if _truthy_env("USE_JSON_DB", "false"):
+    load_db()
+else:
+    # In production we rely on Supabase and skip loading legacy JSON DB
+    print("[ArtLens] USE_JSON_DB is false: skipping legacy JSON load. Using Supabase cache.")
 
 # ----------------------------------------------------------------------------
 # Schemas
@@ -231,12 +238,19 @@ class Item(BaseModel):
 # ----------------------------------------------------------------------------
 @app.get("/health")
 def health():
-    return {"status": "ok", "count": len(items), "dim": db_dim, "db_path": ART_DB_PATH}
+    return {
+        "status": "ok",
+        "count": len(flat_descriptors),
+        "dim": db_dim,
+        "backend_db": "supabase",
+    }
 
 
 @app.get("/items", response_model=List[Item])
 def list_items():
-    # Backward-compat: return full items (including embeddings)
+    # Legacy endpoint: only available when USE_JSON_DB=true
+    if not _truthy_env("USE_JSON_DB", "false"):
+        raise HTTPException(status_code=410, detail="/items is disabled (USE_JSON_DB=false)")
     return items
 
 
