@@ -1,5 +1,5 @@
-import { initEmbeddingModel, embedFromCanvas } from '../src/js/embedding.js';
-import { BACKEND_URL, CROP_SIZE } from '../src/js/constants.js';
+import { initEmbeddingModel, embedFromCanvas } from './embedding.js';
+import { BACKEND_URL, CROP_SIZE } from './constants.js';
 
 const submitBtn = document.getElementById('submitBtn');
 const statusEl = document.getElementById('statusMsg');
