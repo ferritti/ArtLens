@@ -132,32 +132,18 @@ async function loadOptionB() {
   return merged;
 }
 
-async function loadFallbackItems() {
-  const res = await fetch(`${BACKEND_URL}/items`, { cache: 'no-store' });
-  if (!res.ok) throw new Error(`Failed to load database: ${res.status}`);
-  const data = await res.json();
-  if (Array.isArray(data)) return data;
-  if (Array.isArray(data?.items)) return data.items;
-  if (data && typeof data === 'object') return Object.entries(data).map(([id, v]) => ({ id, ...v }));
-  return [];
-}
 
 export async function loadArtworkDB() {
   // Prefer v2 endpoints
   try {
     artworkDB = await loadOptionB_v2();
   } catch (eV2) {
-    console.warn('V2 endpoints not available. Trying legacy Option B. Reason:', eV2?.message || eV2);
+    console.warn('V2 endpoints not available. Trying legacy /descriptors. Reason:', eV2?.message || eV2);
     try {
       artworkDB = await loadOptionB();
     } catch (e) {
-      console.warn('Legacy Option B failed. Falling back to /items. Reason:', e?.message || e);
-      try {
-        artworkDB = await loadFallbackItems();
-      } catch (e2) {
-        console.warn('Fallback /items load failed:', e2);
-        artworkDB = [];
-      }
+      console.warn('Both /descriptors_v2 and /descriptors failed:', e?.message || e);
+      artworkDB = [];
     }
   }
 
@@ -189,6 +175,6 @@ export async function loadArtworkDB() {
 
   console.log('Artwork DB entries:', artworkDB.length, 'dim:', dbDim, 'normalized:', normalized);
   if (!artworkDB.length) {
-    console.warn('Artwork DB è vuoto dopo il parsing. Controlla il formato JSON.');
+    console.warn('Nessun dato nel catalogo/descrittori. Verifica le API del backend e il popolamento del DB.');
   }
 }

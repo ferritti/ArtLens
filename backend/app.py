@@ -4,15 +4,11 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional, Dict, Any, Tuple
 import os
-import json
 import numpy as np
 
 # ----------------------------------------------------------------------------
 # Config
 # ----------------------------------------------------------------------------
-# Path to JSON database (relative to project root by default)
-ART_DB_PATH = os.getenv("ART_DB_PATH", os.path.join(os.path.dirname(__file__), "data", "artwork_database.json"))
-ART_DB_PATH = os.path.abspath(ART_DB_PATH)
 
 # Allow CORS origins (comma-separated). Default to local dev origins.
 DEFAULT_ORIGINS = [
@@ -49,14 +45,10 @@ if os.path.isdir(IMAGES_DIR):
     app.mount("/images", StaticFiles(directory=IMAGES_DIR), name="images")
 
 # ----------------------------------------------------------------------------
-# In-memory DB
+# In-memory cache (populated from Supabase)
 # ----------------------------------------------------------------------------
-# Backward-compat synthesized items (single embedding per artwork)
-items: List[Dict[str, Any]] = []
-# Native v2 structures
 artworks: Dict[str, Dict[str, Any]] = {}
 flat_descriptors: List[Dict[str, Any]] = []
-# Embedding dimension
 db_dim: Optional[int] = None
 
 
@@ -65,126 +57,6 @@ def _l2_normalize(vec: np.ndarray) -> np.ndarray:
     return vec / n if n > 0 else vec
 
 
-def _ensure_list_of_items(data) -> List[Dict[str, Any]]:
-    if isinstance(data, list):
-        return data
-    if isinstance(data, dict):
-        if "items" in data and isinstance(data["items"], list):
-            return data["items"]
-        # Convert {id: {..}} to list
-        return [{"id": k, **v} for k, v in data.items() if isinstance(v, dict)]
-    return []
-
-
-def load_db() -> None:
-    global items, artworks, flat_descriptors, db_dim
-    items = []
-    artworks = {}
-    flat_descriptors = []
-    db_dim = None
-    if not os.path.exists(ART_DB_PATH):
-        print(f"[ArtLens] DB file not found at {ART_DB_PATH}. Starting with empty DB.")
-        return
-    try:
-        with open(ART_DB_PATH, "r", encoding="utf-8") as f:
-            data = json.load(f)
-
-        # v2 format: dict of artworks
-        if isinstance(data, dict) and not isinstance(data.get("items"), list):
-            for art_id, meta in data.items():
-                if not isinstance(meta, dict):
-                    continue
-                item = {**meta}
-                # normalize descriptions map
-                if not isinstance(item.get("descriptions"), dict):
-                    desc = item.get("description")
-                    if isinstance(desc, str) and desc:
-                        item["descriptions"] = {"it": desc}
-                item.pop("description", None)
-
-                # extract visual descriptors
-                vd_list = []
-                vds = item.get("visual_descriptors") or []
-                for idx, vd in enumerate(vds):
-                    if not isinstance(vd, dict):
-                        continue
-                    emb = vd.get("embedding")
-                    if isinstance(emb, list):
-                        v = np.asarray(emb, dtype=np.float32)
-                        v = _l2_normalize(v)
-                        if db_dim is None:
-                            db_dim = int(v.shape[0])
-                        elif int(v.shape[0]) != int(db_dim):
-                            # skip wrong-dim descriptor
-                            continue
-                        desc_id = vd.get("id") or vd.get("image_path") or f"{art_id}#{idx}"
-                        flat_descriptors.append({
-                            "artwork_id": str(art_id),
-                            "descriptor_id": str(desc_id),
-                            "image_path": vd.get("image_path"),
-                            "embedding": v.tolist(),
-                        })
-                        # store meta without embedding
-                        vd_meta = {k: v for k, v in vd.items() if k != "embedding"}
-                        vd_list.append(vd_meta)
-                item["visual_descriptors"] = vd_list
-                item["id"] = str(art_id)
-                artworks[str(art_id)] = item
-
-            # synthesize legacy items list (first descriptor per artwork)
-            for art_id, art in artworks.items():
-                first = next((d for d in flat_descriptors if d["artwork_id"] == art_id), None)
-                desc_map = art.get("descriptions") if isinstance(art.get("descriptions"), dict) else {}
-                # language fallback: it -> en -> first available
-                description = desc_map.get("it") or desc_map.get("en") or (next(iter(desc_map.values())) if desc_map else None)
-                it = {k: v for k, v in art.items() if k not in ("visual_descriptors", "descriptions")}
-                it["id"] = art_id
-                if description:
-                    it["description"] = description
-                if first:
-                    it["embedding"] = first.get("embedding")
-                items.append(it)
-        else:
-            # legacy format
-            items = _ensure_list_of_items(data)
-            for it in items:
-                emb = it.get("embedding")
-                if isinstance(emb, list):
-                    v = np.asarray(emb, dtype=np.float32)
-                    v = _l2_normalize(v)
-                    it["embedding"] = v.tolist()
-                    if db_dim is None:
-                        db_dim = int(v.shape[0])
-
-            # also build artworks/flat_descriptors from legacy for uniformity
-            for it in items:
-                art_id = str(it.get("id") or it.get("title") or len(artworks))
-                meta = {k: v for k, v in it.items() if k not in ("embedding",)}
-                meta["id"] = art_id
-                artworks[art_id] = meta
-                if isinstance(it.get("embedding"), list):
-                    flat_descriptors.append({
-                        "artwork_id": art_id,
-                        "descriptor_id": art_id,
-                        "image_path": None,
-                        "embedding": it["embedding"],
-                    })
-    except Exception as e:
-        print(f"[ArtLens] Failed to load DB: {e}")
-        items = []
-        artworks = {}
-        flat_descriptors = []
-        db_dim = None
-
-
-def _truthy_env(name: str, default: str = "false") -> bool:
-    return os.getenv(name, default).strip().lower() in ("1", "true", "yes", "on")
-
-if _truthy_env("USE_JSON_DB", "false"):
-    load_db()
-else:
-    # In production we rely on Supabase and skip loading legacy JSON DB
-    print("[ArtLens] USE_JSON_DB is false: skipping legacy JSON load. Using Supabase cache.")
 
 # ----------------------------------------------------------------------------
 # Schemas
@@ -222,15 +94,6 @@ class MatchItem(BaseModel):
 class MatchResponse(BaseModel):
     matches: List[MatchItem]
 
-class Item(BaseModel):
-    id: Optional[str] = None
-    title: Optional[str] = None
-    artist: Optional[str] = None
-    year: Optional[str] = None
-    museum: Optional[str] = None
-    location: Optional[str] = None
-    description: Optional[str] = None
-    embedding: Optional[List[float]] = None
 
 
 # ----------------------------------------------------------------------------
@@ -246,26 +109,8 @@ def health():
     }
 
 
-@app.get("/items", response_model=List[Item])
-def list_items():
-    # Legacy endpoint: only available when USE_JSON_DB=true
-    if not _truthy_env("USE_JSON_DB", "false"):
-        raise HTTPException(status_code=410, detail="/items is disabled (USE_JSON_DB=false)")
-    return items
-
-
 # Option B: separate catalog (metadata) and descriptors (embeddings)
-class CatalogItem(BaseModel):
-    id: Optional[str] = None
-    title: Optional[str] = None
-    artist: Optional[str] = None
-    year: Optional[str] = None
-    museum: Optional[str] = None
-    location: Optional[str] = None
-    description: Optional[str] = None
-
-    # Pydantic v2: allow unknown/extra fields to pass through (e.g., image, tags)
-    model_config = ConfigDict(extra='allow')
+# Note: using the CatalogItem schema defined above (with 'descriptions').
 
 
 @app.get("/catalog", response_model=List[CatalogItem])
@@ -316,34 +161,6 @@ def get_descriptors_meta_v2():
     ]
 
 
-@app.post("/items", response_model=Item)
-def upsert_item(item: Item):
-    global db_dim
-    data = item.dict()
-    if data.get("embedding") is not None:
-        vec = np.asarray(data["embedding"], dtype=np.float32)
-        vec = _l2_normalize(vec)
-        data["embedding"] = vec.tolist()
-        if db_dim is None:
-            db_dim = int(vec.shape[0])
-        elif int(vec.shape[0]) != int(db_dim):
-            raise HTTPException(status_code=400, detail=f"Embedding dim mismatch: got {vec.shape[0]}, expected {db_dim}")
-
-    # Upsert by id or title
-    key = data.get("id") or data.get("title")
-    if key is None:
-        raise HTTPException(status_code=400, detail="Item must have at least 'id' or 'title'")
-
-    # Ensure id string
-    if data.get("id") is None:
-        data["id"] = str(key)
-
-    for i, it in enumerate(items):
-        if str(it.get("id")) == str(data["id"]):
-            items[i] = {**it, **data}
-            return items[i]
-    items.append(data)
-    return data
 
 
 @app.post("/match", response_model=MatchResponse)
@@ -410,7 +227,6 @@ def match(req: MatchRequest):
 #   pip install -r backend/requirements.txt
 #   uvicorn backend.app:app --reload --host 0.0.0.0 --port 8000
 # Optionally set:
-#   export ART_DB_PATH=backend/data/artwork_database.json
 #   export FRONTEND_ORIGINS=http://localhost:5173
 # ----------------------------------------------------------------------------
 
