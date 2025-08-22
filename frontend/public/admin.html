@@ -16,7 +16,7 @@
 </head>
 <body>
   <h1>Admin – Nuova Opera</h1>
-  <p class="help">L'immagine resta sul tuo dispositivo: viene usata solo per calcolare l'embedding nel browser.</p>
+  <p class="help">Le immagini restano sul tuo dispositivo: vengono usate solo per calcolare gli embedding nel browser.</p>
 
   <form id="f">
     <label>ID
@@ -45,8 +45,9 @@
     <label>Descrizione EN
       <textarea name="desc_en" placeholder="Description in English"></textarea>
     </label>
-    <label>Immagine (usata solo localmente per l'embedding)
-      <input type="file" name="image" accept="image/*" required />
+    <label>Immagini (usate solo localmente per gli embedding)
+      <input type="file" name="images" accept="image/*" multiple required />
+      <small class="help">Puoi selezionare più immagini per la stessa opera.</small>
     </label>
     <button type="submit">Calcola embedding e salva</button>
   </form>

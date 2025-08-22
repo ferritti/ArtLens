@@ -27,6 +27,14 @@ function buildDescriptions(fd) {
   return Object.keys(out).length ? out : undefined;
 }
 
+function descriptorIdFor(file, index) {
+  const base = (file.name || `img_${index+1}`)
+    .replace(/\.[a-z0-9]+$/i, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, '-') || `img-${index+1}`;
+  return base;
+}
+
 async function onSubmit(e) {
   e.preventDefault();
   const form = e.currentTarget;
@@ -34,13 +42,21 @@ async function onSubmit(e) {
   try {
     const id = (fd.get('id') || '').trim();
     if (!id) return alert('Specifica un ID');
-    const file = fd.get('image');
-    if (!file) return alert('Seleziona un\'immagine');
 
-    // Init and compute embedding locally
+    const filesInput = /** @type {HTMLInputElement} */ (document.querySelector('input[name="images"]'));
+    const files = filesInput?.files;
+    if (!files || !files.length) return alert('Seleziona almeno un’immagine');
+
+    // Init and compute embeddings locally
     await initEmbeddingModel();
-    const can = await imageToCanvas224(file);
-    const embedding = embedFromCanvas(can); // already L2-normalized
+    const visual_descriptors = [];
+
+    for (let i = 0; i < files.length; i++) {
+      const f = files[i];
+      const can = await imageToCanvas224(f);
+      const embedding = embedFromCanvas(can); // already L2-normalized
+      visual_descriptors.push({ id: descriptorIdFor(f, i), embedding });
+    }
 
     const payload = {
       id,
@@ -50,7 +66,7 @@ async function onSubmit(e) {
       museum: (fd.get('museum') || '').trim() || null,
       location: (fd.get('location') || '').trim() || null,
       descriptions: buildDescriptions(fd),
-      visual_descriptors: [{ id: 'main', embedding }]
+      visual_descriptors,
     };
 
     const defaultToken = (typeof localStorage !== 'undefined' ? localStorage.getItem('X_ADMIN_TOKEN') : '') || '';
@@ -72,7 +88,7 @@ async function onSubmit(e) {
       const t = await res.text();
       throw new Error(`${res.status} ${t}`);
     }
-    alert('Opera salvata con successo!');
+    alert(`Opera salvata con successo! (${visual_descriptors.length} immagini/embedding)`);
     form.reset();
   } catch (err) {
     console.error('Admin save error:', err);
