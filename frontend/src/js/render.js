@@ -13,6 +13,22 @@ const STICKY_MS = 180; // keep best match visible for 180ms
 const HYSTERESIS_DROP = 0.04; // allow small confidence drop to keep sticky
 let stickyBest = null; // { entry, confidence, box, until }
 
+// Update placard language live if user toggles EN/IT while scanner is open
+try {
+  window.addEventListener('storage', (e) => {
+    if (!e || e.key !== 'lang') return;
+    if (stickyBest && stickyBest.entry) {
+      try {
+        showInfo(
+          stickyBest.entry.title || 'Artwork',
+          pickLangText(stickyBest.entry.descriptions),
+          stickyBest.confidence
+        );
+      } catch {}
+    }
+  });
+} catch {}
+
 // Visual styling constants for bounding box and label placement
 const CORNER_LEN_FACTOR = 0.085; // bracket length as fraction of min(w,h)
 const CORNER_OFFSET = 6;         // gap between rounded box and corner brackets
@@ -218,6 +234,7 @@ export async function drawDetections(ctx, result, onHotspotClick) {
           }
 
           // Show placard with localized description
+          try { showInfo(entry.title || 'Artwork', pickLangText(entry.descriptions), confidence); } catch {}
 
           const key = (entry && (entry.id != null ? String(entry.id) : (entry.title || '')));
           if (key && key !== lastRecognizedKey) {
@@ -322,6 +339,7 @@ export async function drawDetections(ctx, result, onHotspotClick) {
     // Hotspot and hint for current best
     renderHotspot(best, onHotspotClick);
     placeHintOverBox(best.box);
+    try { showInfo(best.entry.title || 'Artwork', pickLangText(best.entry.descriptions), best.confidence); } catch {}
     const key = (best.entry && (best.entry.id != null ? String(best.entry.id) : (best.entry.title || '')));
     if (key && key !== lastRecognizedKey) {
       lastRecognizedKey = key;
