@@ -115,3 +115,41 @@ async function onSubmit(e) {
 
 const formEl = document.getElementById('f');
 if (formEl) formEl.addEventListener('submit', onSubmit);
+
+// Dashboard auth guard and UI helpers (migrated from curator_dashboard.html inline scripts)
+(function(){
+  // Detect curator dashboard by presence of main container or form
+  const isDashboard = document.querySelector('.cdash') || document.getElementById('f');
+  if (!isDashboard) return;
+
+  // Auth guard and optional logout handling
+  try {
+    const AUTH_KEY = 'artlens.auth';
+    const qs = new URLSearchParams(location.search);
+    if (qs.has('logout')) { try { localStorage.removeItem(AUTH_KEY); } catch(_) {} }
+    const authed = !!localStorage.getItem(AUTH_KEY);
+    if (!authed) { location.replace('./curator_access.html'); return; }
+  } catch (e) {
+    try { location.replace('./curator_access.html'); } catch(_) {}
+    return;
+  }
+
+  // Dropzone behavior for image uploads
+  const drop = document.getElementById('drop');
+  const input = document.getElementById('images');
+  function openPicker(){ try { input?.click(); } catch(_) {} }
+  function stop(e){ try { e.preventDefault(); e.stopPropagation(); } catch(_) {} }
+  if (drop && input) {
+    drop.addEventListener('click', openPicker);
+    drop.addEventListener('keydown', (e)=>{ if (e.key==='Enter' || e.key===' ') { stop(e); openPicker(); }});
+    ['dragenter','dragover'].forEach(ev=> drop.addEventListener(ev, (e)=>{ stop(e); drop.classList.add('drag'); }));
+    ['dragleave','drop'].forEach(ev=> drop.addEventListener(ev, (e)=>{ stop(e); drop.classList.remove('drag'); }));
+    drop.addEventListener('drop', (e)=>{ const files = e.dataTransfer?.files; if (files?.length) { try { input.files = files; } catch(_) {} input.dispatchEvent(new Event('change',{bubbles:true})); }});
+  }
+  const out = document.getElementById('statusMsg');
+  if (input) input.addEventListener('change', ()=>{ const n = input.files?.length || 0; if (n && out) { out.textContent = `${n} file selected`; } });
+
+  // Sign out
+  const signOut = document.getElementById('signOutBtn');
+  if (signOut) signOut.addEventListener('click', ()=>{ try { localStorage.removeItem('artlens.auth'); } catch(_) {} location.href = './curator_access.html'; });
+})();

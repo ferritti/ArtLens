@@ -171,7 +171,7 @@ backBtn?.addEventListener('click', (e) => {
   closeDetail();
 });
 
-appEl.addEventListener('click', (ev) => {
+appEl?.addEventListener('click', (ev) => {
   if (!running) return;
   const matches = getLastMatches();
   if (!matches || !matches.length) return;
@@ -218,8 +218,9 @@ if (startBtn) {
   startBtn.addEventListener('click', (e) => { try { e.preventDefault(); e.stopPropagation(); } catch {}; runStartup(); });
 }
 
-// Auto-start the camera immediately without requiring a start button
+// Auto-start the camera only when scanner elements are present
 (function(){
+  if (!videoEl) return; // Not on scanner page
   function kick(){ try{ runStartup(); } catch(e){} }
   if (document.readyState==='complete' || document.readyState==='interactive') setTimeout(kick, 200);
   else document.addEventListener('DOMContentLoaded', function(){ setTimeout(kick, 200); }, { once: true });
@@ -329,3 +330,40 @@ function stopAll() {
 }
 
 // Tip: For local development, serve over HTTPS (or localhost) for camera permissions.
+
+// Homepage overlay and navigation setup (runs only if elements exist)
+(function(){
+  const scanBtn = document.getElementById('scanBtn');
+  const overlay = document.getElementById('scannerOverlay');
+  const frame = document.getElementById('scannerFrame');
+  const closeBtn = document.getElementById('closeScanner');
+  const curatorBtn = document.getElementById('curatorBtn');
+
+  if (curatorBtn) {
+    curatorBtn.addEventListener('click', () => { location.href = './curator_access.html'; });
+  }
+
+  if (!scanBtn || !overlay || !frame || !closeBtn) return; // Not on homepage
+
+  function openScanner(){
+    if (!window.isSecureContext && location.hostname !== 'localhost' && location.hostname !== '127.0.0.1') {
+      alert('La fotocamera richiede HTTPS (oppure localhost). Apri la pagina con https://');
+      return;
+    }
+    try { frame.src = 'about:blank'; } catch {}
+    frame.src = 'scanner.html';
+    overlay.classList.add('on');
+    overlay.setAttribute('aria-hidden', 'false');
+  }
+
+  function closeScanner(){
+    overlay.classList.remove('on');
+    overlay.setAttribute('aria-hidden', 'true');
+    try { frame.src = 'about:blank'; } catch {}
+  }
+
+  scanBtn.addEventListener('click', openScanner);
+  closeBtn.addEventListener('click', closeScanner);
+  window.addEventListener('pagehide', closeScanner, { once: true });
+  window.addEventListener('beforeunload', closeScanner, { once: true });
+})();

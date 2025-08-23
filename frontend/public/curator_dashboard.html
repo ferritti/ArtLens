@@ -6,81 +6,7 @@
   <title>curator - dashboard</title>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    :root{
-      --bg-1:#f2f6fc; --bg-2:#e9eff7; --ink:#0e1a2f; --muted:#5a6a84;
-      --card:#ffffff; --radius:20px; --shadow:0 24px 60px rgba(17,43,98,0.12), 0 2px 8px rgba(17,43,98,0.08);
-      --tab:#f1f4fa; --tab-border:#e3e9f4; --active:#ffffff;
-      --primary:#2f66f3; --primary-ink:#fff; --line:#d6dfec; --hint:#7d8aa3;
-      --drop:#cdd7e6; --drop-ink:#6b7a94;
-      --btn:#0f49e0; --btn-ink:#fff;
-    }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; color:var(--ink);
-      background: radial-gradient(120% 80% at 50% 0%, rgba(19,87,255,0.06), rgba(19,87,255,0) 44%), linear-gradient(180deg,var(--bg-1),var(--bg-2));
-      min-height:100dvh; padding: clamp(14px, 3vw, 30px);
-    }
-    .cdash{ max-width:1120px; margin:0 auto; }
-    /* Header */
-    .head{ display:flex; align-items:flex-start; justify-content:space-between; gap:16px; }
-    .title{ margin:0; font-weight:800; font-size: clamp(34px, 6vw, 48px); letter-spacing:0.2px; color:#16233d; }
-    .subtitle{ margin-top:10px; color:#677692; font-size: clamp(16px, 2.4vw, 20px); }
-    .signout{ display:inline-flex; align-items:center; gap:10px; height:46px; padding:0 18px; border-radius:14px; border:1px solid #d8e2f0; background:#fff; color:#1b2740; font-weight:700; cursor:pointer; box-shadow: 0 8px 20px rgba(16,33,55,0.06); }
-    .signout svg{ width:18px; height:18px; color:#1b2740; }
-
-    /* Tabs */
-    .tabs{ margin-top:26px; background:var(--tab); border:1px solid var(--tab-border); border-radius:16px; padding:8px; display:flex; gap:6px; }
-    .tab{ flex:0 0 auto; padding:14px 20px; border-radius:12px; font-weight:700; color:#1a2740; cursor:pointer; border:1px solid transparent; background:transparent; }
-    .tab.active{ background:var(--active); border-color:#e7ecf6; box-shadow: 0 8px 16px rgba(13,35,82,0.06); }
-
-    /* Card */
-    .card{ margin-top:20px; background:var(--card); border-radius:24px; box-shadow: var(--shadow); padding: clamp(18px, 3.6vw, 34px); }
-    .card h2{ display:flex; align-items:center; gap:14px; font-size: clamp(24px, 4.8vw, 34px); margin:0 0 22px; color:#1d2842; }
-    .h2-ico{ width:26px; height:26px; color:#2f66f3; font-weight:800; }
-
-    /* Form fields */
-    form{ display:grid; gap:22px; }
-    label.lbl{ font-weight:700; color:#1e2b47; font-size:16px; }
-
-    .dropzone{ border:2px dashed var(--drop); border-radius:16px; background:#fbfdff; color:var(--drop-ink); padding: clamp(24px, 6vw, 40px); display:grid; place-items:center; text-align:center; gap:12px; }
-    .dropzone .upl{ width:56px; height:56px; color:#8ea1bc; }
-    .dropzone strong{ color:#354764; font-size:20px; font-weight:700; }
-    .dropzone small{ color:#8a99b4; font-size:16px; }
-    .dropzone.drag{ background:#f3f7ff; border-color:#9fb3d6; }
-    input[type="file"]{ position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0); clip-path: inset(50%); white-space:nowrap; }
-
-    .field{ display:grid; gap:8px; }
-    .input{ height:60px; border:1px solid var(--line); border-radius:14px; padding: 0 16px; font-size:18px; color:#24334f; background:#fff; outline:none; box-shadow: 0 2px 0 rgba(255,255,255,0.8) inset, 0 6px 18px rgba(16,33,55,0.04); }
-    .input::placeholder{ color:#9aabc0; }
-    .input:focus{ border-color:#2f66f3; box-shadow: 0 0 0 3px rgba(47,102,243,0.15), 0 6px 18px rgba(16,33,55,0.08); }
-
-    .textarea{ min-height:120px; border:1px solid var(--line); border-radius:14px; padding: 12px 16px; font-size:16px; color:#24334f; background:#fff; outline:none; box-shadow: 0 2px 0 rgba(255,255,255,0.8) inset, 0 6px 18px rgba(16,33,55,0.04); resize: vertical; }
-    .textarea::placeholder{ color:#9aabc0; }
-    .textarea:focus{ border-color:#2f66f3; box-shadow: 0 0 0 3px rgba(47,102,243,0.15), 0 6px 18px rgba(16,33,55,0.08); }
-
-    .actions{ display:flex; align-items:center; gap:14px; margin-top:4px; }
-    .btn-primary{ padding: 14px 18px; min-height:48px; border-radius:12px; background: var(--btn); color: var(--btn-ink); font-weight:800; border:0; cursor:pointer; box-shadow: 0 12px 28px rgba(20,70,230,0.22); }
-    .btn-primary:hover{ filter: brightness(0.98); box-shadow: 0 14px 30px rgba(20,70,230,0.28); }
-
-    #statusMsg{ color:#5e718f; font-size:14px; min-height:1.2em; }
-  </style>
-  <script>
-    (function(){
-      try {
-        const AUTH_KEY = 'artlens.auth';
-        const qs = new URLSearchParams(location.search);
-        if (qs.has('logout')) { localStorage.removeItem(AUTH_KEY); }
-        const authed = !!localStorage.getItem(AUTH_KEY);
-        if (!authed) {
-          location.replace('./curator_access.html');
-        }
-      } catch (e) {
-        location.replace('./curator_access.html');
-      }
-    })();
-  </script>
+  <link rel="stylesheet" href="styles/curator_dashboard.css">
 </head>
 <body>
   <div class="cdash">
@@ -156,28 +82,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.0"></script>
 
-  <script>
-    // Dropzone behavior
-    (function(){
-      const drop = document.getElementById('drop');
-      const input = document.getElementById('images');
-      function openPicker(){ input?.click(); }
-      function stop(e){ e.preventDefault(); e.stopPropagation(); }
-      if (drop && input) {
-        drop.addEventListener('click', openPicker);
-        drop.addEventListener('keydown', (e)=>{ if (e.key==='Enter' || e.key===' ') { stop(e); openPicker(); }});
-        ['dragenter','dragover'].forEach(ev=> drop.addEventListener(ev, (e)=>{ stop(e); drop.classList.add('drag'); }));
-        ;['dragleave','drop'].forEach(ev=> drop.addEventListener(ev, (e)=>{ stop(e); drop.classList.remove('drag'); }));
-        drop.addEventListener('drop', (e)=>{ if (e.dataTransfer?.files?.length) { input.files = e.dataTransfer.files; input.dispatchEvent(new Event('change',{bubbles:true})); }});
-      }
-      const out = document.getElementById('statusMsg');
-      input?.addEventListener('change', ()=>{ if (input.files?.length) { out && (out.textContent = `${input.files.length} file selected`); } });
-
-      const signOut = document.getElementById('signOutBtn');
-      signOut?.addEventListener('click', ()=>{ try { localStorage.removeItem('artlens.auth'); } catch(_) {} location.href = './curator_access.html'; });
-    })();
-  </script>
   <!-- Admin logic -->
-  <script type="module" src="../src/js/admin.js"></script>
+  <script type="module" src="../src/js/curator_dashboard.js"></script>
 </body>
 </html>
