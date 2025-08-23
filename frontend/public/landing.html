@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>ArtLens</title>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Cormorant+Garamond:wght@600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f5f9ff;
+      --card-bg: #ffffff;
+      --ink: #0f1b2d;
+      --muted: #60708a;
+      --primary: #1557ff; /* CTA blue */
+      --primary-ink: #ffffff;
+      --accent: #ff9c07;  /* orange outline */
+      --radius-card: 28px;
+      --shadow-card: 0 22px 60px rgba(31,55,97,0.18), 0 2px 6px rgba(31,55,97,0.10);
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(120% 60% at 50% 0%, rgba(21,87,255,0.06), rgba(21,87,255,0) 44%),
+        linear-gradient(180deg, #f7fbff, #eef4fb 60%, #e9f0f9);
+      min-height: 100dvh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+    .wrap { width: min(720px, 92vw); }
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius-card);
+      box-shadow: var(--shadow-card);
+      padding: clamp(24px, 5.2vw, 56px) clamp(20px, 5vw, 52px);
+      position: relative;
+    }
+    /* soft blue glow shadow below card */
+    .card::after {
+      content: ""; position: absolute; inset: auto 18px -26px 18px; height: 28px; border-radius: 26px;
+      background: radial-gradient(60% 100% at 50% 0%, rgba(15,27,45,0.20), rgba(15,27,45,0));
+      filter: blur(14px);
+    }
+    .brand { text-align: center; margin-bottom: clamp(18px, 3.6vw, 30px); }
+    .brand .mark { width: 54px; height: 54px; margin: 0 auto 10px; color: #c1b189; }
+    .brand .word { font: 600 16px/1 Inter, system-ui; letter-spacing: 3px; color: #b9c2cf; }
+
+    h1.title {
+      font: 600 clamp(34px, 5.2vw, 48px)/1.1 "Cormorant Garamond", Georgia, serif;
+      text-align: center; margin: 0 0 10px;
+      color: #17223a;
+    }
+    p.subtitle {
+      text-align: center; color: var(--muted);
+      font-size: clamp(16px, 2.6vw, 22px);
+      margin: 0 0 clamp(20px, 4.2vw, 36px);
+    }
+
+    .actions { display: grid; gap: 16px; margin: 0 auto clamp(18px, 3.6vw, 30px); width: min(600px, 100%); }
+    .btn { appearance: none; border: 0; cursor: pointer; border-radius: 14px; padding: 18px 22px; font-weight: 700; font-size: clamp(16px, 2.6vw, 22px); display: grid; grid-template-columns: 28px 1fr; align-items: center; gap: 14px; }
+    .btn .ico { width: 24px; height: 24px; }
+
+    .btn-primary { background: var(--primary); color: var(--primary-ink); box-shadow: 0 14px 30px rgba(21,87,255,0.35), 0 2px 0 rgba(255,255,255,0.45) inset; }
+    .btn-primary:hover { filter: brightness(0.98); box-shadow: 0 18px 36px rgba(21,87,255,0.45); }
+
+    .btn-outline { background: #fff; color: #c25c00; border: 2px solid var(--accent); box-shadow: 0 10px 24px rgba(255,156,7,0.18); }
+    .btn-outline:hover { background: #fff7eb; }
+
+    .divider { height: 1px; background: rgba(15,27,45,0.08); margin: clamp(8px, 2.6vw, 20px) 0; border-radius: 1px; }
+
+    .foot { text-align: center; color: var(--muted); font-size: clamp(14px, 2.2vw, 18px); }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="card" aria-labelledby="t">
+      <header class="brand" aria-label="Museum brand">
+        <!-- Column icon -->
+        <svg class="mark" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M3 8h18v2H3V8zm2 3h3v7H5v-7zm5 0h4v7h-4v-7zm6 0h3v7h-3v-7zM4 6l8-4 8 4H4z" opacity=".3"/>
+          <path d="M2 20h20v2H2z"/>
+        </svg>
+        <div class="word">MUSEUM</div>
+      </header>
+
+      <h1 id="t" class="title">ArtLens</h1>
+      <p class="subtitle">Discover art through technology</p>
+
+      <div class="actions">
+        <button class="btn btn-primary" type="button" onclick="location.href='./index.html'">
+          <svg class="ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 7a5 5 0 100 10 5 5 0 000-10zm9-2h-3.17l-1.83-2H7L5.17 5H2a1 1 0 00-1 1v14a1 1 0 001 1h19a1 1 0 001-1V6a1 1 0 00-1-1zM12 9a3 3 0 110 6 3 3 0 010-6z"/></svg>
+          <span>Scan Artwork</span>
+        </button>
+        <button class="btn btn-outline" type="button" onclick="location.href='./admin.html'">
+          <svg class="ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-5 0-9 2.5-9 5.5V22h18v-2.5C21 16.5 17 14 12 14z"/></svg>
+          <span>Curator Login</span>
+        </button>
+      </div>
+
+      <div class="divider" role="separator" aria-hidden="true"></div>
+      <p class="foot">Powered by advanced AI recognition technology</p>
+    </section>
+  </div>
+</body>
+</html>
