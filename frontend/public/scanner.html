@@ -19,6 +19,10 @@
     <div class="scan-grid" aria-hidden="true"></div>
     <canvas id="overlay"></canvas>
 
+    <button id="stageBack" class="stage-back" type="button" aria-label="Back">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14.7 6.3a1 1 0 010 1.4L10.41 12l4.3 4.3a1 1 0 11-1.42 1.4l-5-5a1 1 0 010-1.4l5-5a1 1 0 011.41 0z"/></svg>
+      <span><- Back</span>
+    </button>
 
     <div id="info" class="placard"></div>
     <div id="hint" class="hint hidden" aria-live="polite">Tocca l’opera</div>
@@ -29,9 +33,6 @@
         <div class="detail-title" id="detailTitle"></div>
         <div class="detail-meta" id="detailMeta"></div>
         <div class="detail-body" id="detailBody"></div>
-        <div class="detail-actions">
-          <button id="backBtn" class="back" type="button">Torna alla Fotocamera</button>
-        </div>
       </div>
     </div>
 
