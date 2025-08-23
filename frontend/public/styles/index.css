@@ -100,18 +100,18 @@ p.subtitle {
   border-radius: calc(var(--radius-card) - 2px) calc(var(--radius-card) - 2px) 0 0;
   /* extend to card edges by canceling card padding (same clamp values) */
   margin: calc(-1 * clamp(24px, 5.2vw, 56px)) calc(-1 * clamp(20px, 5vw, 52px)) 20px;
-  padding: 14px clamp(16px, 3.4vw, 24px);
+  padding: 12px clamp(16px, 3.4vw, 24px);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.25);
 }
 .langbar-inner {
-  min-height: 86px;
+  min-height: 74px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: clamp(6px, 1.8vw, 12px);
 }
 .langbar .globe {
-  width: 24px; height: 24px;
+  width: 20px; height: 20px;
   filter: brightness(0) invert(1) drop-shadow(0 1px 0 rgba(0,0,0,0.25));
 }
 .langbar .toggle { display: grid; place-items: center; }
@@ -127,10 +127,10 @@ p.subtitle {
   appearance: none;
   border: 0;
   border-radius: 9999px;
-  padding: 10px 20px;
-  min-width: 72px;
+  padding: 8px 16px;
+  min-width: 64px;
   font-weight: 800;
-  font-size: 16px;
+  font-size: 15px;
   letter-spacing: 0.6px;
   background: transparent;
   color: #ffffff;
