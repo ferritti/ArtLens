@@ -8,7 +8,7 @@ export const BACKEND_URL = (typeof window !== 'undefined' && window.BACKEND_URL)
 export const CROP_SIZE = 224; // MobileNet input size
 
 // Matching settings
-export const COSINE_THRESHOLD = 0.75; // tune as needed [0..1]
+export const COSINE_THRESHOLD = 0.70; // tune as needed [0..1]
 export const DEBUG_FALLBACK_CROP = false; // try center crop when no detections (debug only)
 
 // Rendering limits
