@@ -88,28 +88,9 @@
       </div>
     </div>
 
-    <div class="hud" id="hud">
-      <div class="card">
-        <div>
-          <div class="card-title">Scopri l'arte intorno a te</div>
-          <div class="status" id="status">Inquadra le opere con la fotocamera</div>
-        </div>
-        <div class="actions">
-          <button id="startBtn">Avvia</button>
-        </div>
-      </div>
-    </div>
   </main>
 
   <script>window.BACKEND_URL='https://artlens-obss.onrender.com';<\/script>
-  <script>
-  // Auto-start after module attaches listeners
-  (function(){
-    function kick(){ try{ document.getElementById('startBtn')?.click(); }catch(e){} }
-    if (document.readyState==='complete' || document.readyState==='interactive') setTimeout(kick, 250);
-    else document.addEventListener('DOMContentLoaded', function(){ setTimeout(kick, 250); });
-  })();
-  <\/script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"><\/script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.0"><\/script>
   <script type="module" src="../src/js/index.js"><\/script>

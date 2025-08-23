@@ -185,12 +185,13 @@ appEl.addEventListener('click', (ev) => {
   if (best) openDetail(best.entry, best.confidence);
 });
 
-startBtn.addEventListener('click', async () => {
-  startBtn.disabled = true;
+async function runStartup() {
+  if (running || stream) return;
+  if (startBtn) startBtn.disabled = true;
   try {
     status('Starting camera…');
     await startCamera();
-    hudEl.classList.add('hidden');
+    if (hudEl) hudEl.classList.add('hidden');
     running = true;
     startLoop();
 
@@ -208,10 +209,21 @@ startBtn.addEventListener('click', async () => {
     }
   } catch (err) {
     console.error(err);
-    startBtn.disabled = false;
+    if (startBtn) startBtn.disabled = false;
     status('Error: ' + (err?.message || err));
   }
-});
+}
+
+if (startBtn) {
+  startBtn.addEventListener('click', (e) => { try { e.preventDefault(); e.stopPropagation(); } catch {}; runStartup(); });
+}
+
+// Auto-start the camera immediately without requiring a start button
+(function(){
+  function kick(){ try{ runStartup(); } catch(e){} }
+  if (document.readyState==='complete' || document.readyState==='interactive') setTimeout(kick, 200);
+  else document.addEventListener('DOMContentLoaded', function(){ setTimeout(kick, 200); }, { once: true });
+})();
 
 async function startCamera() {
   if (!navigator.mediaDevices?.getUserMedia) {
