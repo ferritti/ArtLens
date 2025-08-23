@@ -147,7 +147,41 @@ if (formEl) formEl.addEventListener('submit', onSubmit);
     drop.addEventListener('drop', (e)=>{ const files = e.dataTransfer?.files; if (files?.length) { try { input.files = files; } catch(_) {} input.dispatchEvent(new Event('change',{bubbles:true})); }});
   }
   const out = document.getElementById('statusMsg');
-  if (input) input.addEventListener('change', ()=>{ const n = input.files?.length || 0; if (n && out) { out.textContent = `${n} file selected`; } });
+  const previews = document.getElementById('previews');
+  let previewURLs = [];
+  function clearPreviews(){
+    try { previewURLs.forEach(url => URL.revokeObjectURL(url)); } catch(_) {}
+    previewURLs = [];
+    if (previews) previews.innerHTML = '';
+  }
+  function renderPreviews(fileList){
+    if (!previews) return;
+    clearPreviews();
+    const files = Array.from(fileList || []);
+    const frag = document.createDocumentFragment();
+    files.forEach((f)=>{
+      if (!f || !f.type?.startsWith('image/')) return;
+      const url = URL.createObjectURL(f);
+      previewURLs.push(url);
+      const fig = document.createElement('figure');
+      fig.className = 'preview';
+      const img = document.createElement('img');
+      img.src = url; img.alt = 'Anteprima immagine';
+      fig.appendChild(img);
+      frag.appendChild(fig);
+    });
+    previews.appendChild(frag);
+  }
+  if (input) input.addEventListener('change', ()=>{
+    const n = input.files?.length || 0;
+    if (out) { out.textContent = n ? `${n} file selected` : ''; }
+    if (n) renderPreviews(input.files);
+    else clearPreviews();
+  });
+
+  // Clear previews on form reset
+  const form = document.getElementById('f');
+  if (form) form.addEventListener('reset', ()=>{ clearPreviews(); if (out) out.textContent=''; });
 
   // Sign out
   const signOut = document.getElementById('signOutBtn');
