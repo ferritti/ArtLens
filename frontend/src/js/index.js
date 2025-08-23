@@ -366,4 +366,12 @@ function stopAll() {
   closeBtn.addEventListener('click', closeScanner);
   window.addEventListener('pagehide', closeScanner, { once: true });
   window.addEventListener('beforeunload', closeScanner, { once: true });
+
+  // Listen for close requests from the scanner iframe (Back button)
+  window.addEventListener('message', (e)=>{
+    const data = e?.data;
+    if (data && (data.type === 'close-scanner')) {
+      closeScanner();
+    }
+  });
 })();

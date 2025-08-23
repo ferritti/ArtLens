@@ -102,3 +102,72 @@
   gap: 10px;
   align-items: center;
 }
+
+/* Scanner page header (back button left, centered title) */
+.scanner-top {
+  position: absolute;
+  top: calc(env(safe-area-inset-top) + 12px);
+  left: calc(env(safe-area-inset-left) + 14px);
+  right: calc(env(safe-area-inset-right) + 14px);
+  z-index: 4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: auto;
+  height: 40px; /* match back button height for vertical alignment */
+}
+.scanner-top .scanner-title {
+  font-weight: 800;
+  color: var(--fg);
+  text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+  font-size: clamp(18px, 2.8vw, 22px);
+  line-height: 40px; /* vertically center text within header height */
+}
+.scanner-top .scanner-back {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 40px;
+  padding: 0 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: transparent;
+  color: #ffffff; /* white like requested */
+  font-weight: 600; /* match reference: medium weight */
+  cursor: pointer;
+}
+.scanner-top .scanner-back span{ font-size:18px; line-height:1; color:inherit; }
+.scanner-top .scanner-back svg{ width:22px; height:22px; color: currentColor; }
+.scanner-top .scanner-back:hover{ opacity:0.9; }
+.scanner-top .scanner-back:focus{ outline: 2px solid rgba(255,255,255,0.6); outline-offset: 2px; border-radius: 8px; }
+
+/* Semi-transparent grid overlay for scanner (iPhone-like rule of thirds) */
+.scan-grid {
+  position: absolute;
+  inset: 0;
+  z-index: 1; /* above video, below detection canvas */
+  pointer-events: none;
+  /* 2 vertical + 2 horizontal lines at 1/3 and 2/3 positions */
+  --grid-color: rgba(255,255,255,0.16);
+  --grid-w: 1px;
+  background-image:
+    /* vertical lines */
+    linear-gradient(to right, var(--grid-color), var(--grid-color)),
+    linear-gradient(to right, var(--grid-color), var(--grid-color)),
+    /* horizontal lines */
+    linear-gradient(to bottom, var(--grid-color), var(--grid-color)),
+    linear-gradient(to bottom, var(--grid-color), var(--grid-color));
+  background-size:
+    var(--grid-w) 100%,
+    var(--grid-w) 100%,
+    100% var(--grid-w),
+    100% var(--grid-w);
+  background-position:
+    33.333% 0,
+    66.666% 0,
+    0 33.333%,
+    0 66.666%;
+  background-repeat: no-repeat;
+}

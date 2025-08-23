@@ -16,7 +16,16 @@
 <body>
   <main class="stage" id="app">
     <video id="camera" autoplay playsinline muted></video>
+    <div class="scan-grid" aria-hidden="true"></div>
     <canvas id="overlay"></canvas>
+
+    <header class="scanner-top" role="banner" aria-label="Scanner header">
+      <button type="button" class="scanner-back" id="scannerBack" aria-label="Back">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14.7 6.3a1 1 0 010 1.4L10.41 12l4.3 4.3a1 1 0 11-1.42 1.4l-5-5a1 1 0 010-1.4l5-5a1 1 0 011.41 0z"/></svg>
+        <span>Back</span>
+      </button>
+      <div class="scanner-title" aria-live="polite">Scan Artwork</div>
+    </header>
 
     <div id="info" class="placard"></div>
     <div id="hint" class="hint hidden" aria-live="polite">Tocca l’opera</div>
@@ -39,5 +48,21 @@
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.0"></script>
   <script type="module" src="../src/js/index.js"></script>
+  <script>
+    // Back button closes the scanner overlay in the parent page
+    (function(){
+      const btn = document.getElementById('scannerBack');
+      if (btn) btn.addEventListener('click', ()=>{
+        // If embedded in index (iframe), ask parent to close overlay.
+        try { window.parent.postMessage({ type: 'close-scanner' }, '*'); } catch(e){}
+        // If opened directly (not embedded), navigate to index.html explicitly.
+        try {
+          if (window.top === window) {
+            location.href = 'index.html';
+          }
+        } catch(e){}
+      });
+    })();
+  </script>
 </body>
 </html>
