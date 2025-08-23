@@ -13,7 +13,12 @@ function initLanguageToggle() {
   const all = [btnIt, btnEn].filter(Boolean);
   function updateActive() {
     const lang = getLang();
-    all.forEach(b => b && b.classList.toggle('active', b.dataset.lang === lang));
+    all.forEach(b => {
+      if (!b) return;
+      const isActive = b.dataset.lang === lang;
+      b.classList.toggle('active', isActive);
+      b.setAttribute('aria-selected', String(isActive));
+    });
   }
   all.forEach(b => b && b.addEventListener('click', () => {
     const chosen = b.dataset.lang;

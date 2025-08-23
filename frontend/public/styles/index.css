@@ -91,3 +91,55 @@ p.subtitle {
 #scannerOverlay iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
 #closeScanner { position: absolute; top: 16px; right: 16px; height: 44px; min-width: 44px; border-radius: 12px; border: 0; background: rgba(0,0,0,0.5); color: #fff; font-size: 20px; cursor: pointer; }
 #closeScanner:hover { background: rgba(0,0,0,0.65); }
+
+/* Golden language bar for homepage */
+.card{ overflow: hidden; }
+.langbar {
+  /* golden gradient: from-amber-500 to-amber-600 */
+  background: linear-gradient(90deg, #f59e0b, #d97706);
+  border-radius: calc(var(--radius-card) - 2px) calc(var(--radius-card) - 2px) 0 0;
+  /* extend to card edges by canceling card padding (same clamp values) */
+  margin: calc(-1 * clamp(24px, 5.2vw, 56px)) calc(-1 * clamp(20px, 5vw, 52px)) 20px;
+  padding: 14px clamp(16px, 3.4vw, 24px);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.25);
+}
+.langbar-inner {
+  min-height: 86px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(6px, 1.8vw, 12px);
+}
+.langbar .globe {
+  width: 24px; height: 24px;
+  filter: brightness(0) invert(1) drop-shadow(0 1px 0 rgba(0,0,0,0.25));
+}
+.langbar .toggle { display: grid; place-items: center; }
+.langbar .lang-toggle {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 9999px;
+  background: linear-gradient(180deg, rgba(253, 230, 138, 0.32), rgba(217, 119, 6, 0.42));
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.22), 0 10px 24px rgba(217,119,6,0.25);
+}
+.langbar .lang-toggle button {
+  appearance: none;
+  border: 0;
+  border-radius: 9999px;
+  padding: 10px 20px;
+  min-width: 72px;
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: 0.6px;
+  background: transparent;
+  color: #ffffff;
+  cursor: pointer;
+}
+.langbar .lang-toggle button.active {
+  background: #ffffff;
+  color: #b45309; /* amber-700 */
+  box-shadow: 0 8px 18px rgba(217,119,6,0.28), inset 0 1px 0 rgba(255,255,255,0.9);
+}
+.langbar .lang-toggle button:hover:not(.active) { opacity: 0.9; }
+.langbar .lang-toggle button:focus-visible { outline: 2px solid rgba(255,255,255,0.85); outline-offset: 2px; }
