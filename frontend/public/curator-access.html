@@ -101,7 +101,7 @@
 <body>
   <div class="wrap">
     <section class="card" aria-labelledby="t">
-      <a class="top" href="./landing.html" title="Back">
+      <a class="top" href="./index.html" title="Back">
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M14.7 6.3a1 1 0 010 1.4L10.41 12l4.3 4.3a1 1 0 11-1.42 1.4l-5-5a1 1 0 010-1.4l5-5a1 1 0 011.41 0z"/></svg>
         <span>Back</span>
       </a>
@@ -162,7 +162,7 @@
             if (creds && email === String(creds.email || '').toLowerCase() && pass === String(creds.password || '')) {
               setAuthed();
               showMsg('Signed in. Redirecting…', true);
-              setTimeout(()=>{ location.href = './admin.html'; }, 200);
+              setTimeout(()=>{ location.href = './curator - dashboard.html'; }, 200);
             } else {
               showMsg('Invalid email or password.');
             }
@@ -174,7 +174,7 @@
           initCreds();
           if (alreadyAuthed()) {
             // Optionally auto-redirect: uncomment next line if you want to skip login when already authenticated
-            // location.replace('./admin.html');
+            // location.replace('./curator - dashboard.html');
           }
           const btn = document.getElementById('signInBtn');
           if (btn) btn.addEventListener('click', handleLogin);
