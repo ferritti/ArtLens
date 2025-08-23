@@ -33,12 +33,13 @@
       color:var(--ink);
       background: radial-gradient(120% 80% at 50% 0%, rgba(19,87,255,0.06), rgba(19,87,255,0) 44%),
                   linear-gradient(180deg,var(--bg-1),var(--bg-2));
-      min-height:100dvh; display:grid; place-items:center; padding:18px;
+      min-height:100dvh; display:grid; place-items:center; padding: calc(env(safe-area-inset-top) + 18px) 18px calc(env(safe-area-inset-bottom) + 28px) 18px;
     }
-    .wrap{ width:min(780px, 94vw); }
+    .wrap{ max-width:780px; width:100%; margin-inline:auto; }
     .card{
       background:var(--card); border-radius:var(--card-radius); box-shadow:var(--card-shadow);
       padding: clamp(24px, 5vw, 44px) clamp(20px, 6vw, 56px);
+      margin: 12px auto;
     }
 
     /* Top back link */
