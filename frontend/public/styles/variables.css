@@ -10,10 +10,10 @@
   --accent-ink: #221a10;   /* dark text on gold */
 
   /* Detection overlay colors used by JS */
-  --box-color: var(--accent);
-  --box-fill: rgba(197, 164, 109, 0.14);
-  --label-bg: rgba(10, 11, 14, 0.72);
-  --label-fg: #f5f3ef;
+  --box-color: #00D4FF; /* cyan per spec */
+  --box-fill: rgba(0, 212, 255, 0.12); /* subtle cyan glass fill to match reference */
+  --label-bg: #00D4FF; /* cyan chip */
+  --label-fg: #072a31; /* dark-teal text for contrast */
 
   --radius-card: 20px;
   --radius-placard: 14px;

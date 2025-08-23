@@ -13,57 +13,145 @@ const STICKY_MS = 180; // keep best match visible for 180ms
 const HYSTERESIS_DROP = 0.04; // allow small confidence drop to keep sticky
 let stickyBest = null; // { entry, confidence, box, until }
 
+// Visual styling constants for bounding box and label placement
+const CORNER_LEN_FACTOR = 0.085; // bracket length as fraction of min(w,h)
+const CORNER_OFFSET = 6;         // gap between rounded box and corner brackets
+const LABEL_GAP_FROM_TL = 8;     // extra gap after the TL bracket so label never overlaps it
+const LABEL_TOP_OFFSET = 36;     // vertical distance from box top to label top
+
 function nowMs() { return (typeof performance !== 'undefined' && performance.now) ? performance.now() : Date.now(); }
 
-function drawRoundedBox(ctx, x, y, w, h) {
+function roundRectPath(ctx, x, y, w, h, r){
+  const rr = Math.max(1, Math.min(r, Math.min(w, h) / 2));
   ctx.beginPath();
-  ctx.rect(x + 0.5, y + 0.5, Math.max(1, w - 1), Math.max(1, h - 1));
-  ctx.fill();
+  ctx.moveTo(x + rr, y);
+  ctx.lineTo(x + w - rr, y);
+  ctx.arcTo(x + w, y, x + w, y + rr, rr);
+  ctx.lineTo(x + w, y + h - rr);
+  ctx.arcTo(x + w, y + h, x + w - rr, y + h, rr);
+  ctx.lineTo(x + rr, y + h);
+  ctx.arcTo(x, y + h, x, y + h - rr, rr);
+  ctx.lineTo(x, y + rr);
+  ctx.arcTo(x, y, x + rr, y, rr);
+}
+
+function drawCornerBrackets(ctx, x, y, w, h, len, offset){
+  const l = Math.max(6, len|0), o = Math.max(0, offset|0);
+  ctx.save();
+  const baseLW = ctx.lineWidth || 1;
+  ctx.lineWidth = Math.max(6, baseLW + 2); /* thicker, bold-like */
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.beginPath();
+  // TL
+  ctx.moveTo(x - o, y + l);
+  ctx.lineTo(x - o, y - o);
+  ctx.lineTo(x + l, y - o);
+  // TR
+  ctx.moveTo(x + w - l, y - o);
+  ctx.lineTo(x + w + o, y - o);
+  ctx.lineTo(x + w + o, y + l);
+  // BR
+  ctx.moveTo(x + w + o, y + h - l);
+  ctx.lineTo(x + w + o, y + h + o);
+  ctx.lineTo(x + w - l, y + h + o);
+  // BL
+  ctx.moveTo(x + l, y + h + o);
+  ctx.lineTo(x - o, y + h + o);
+  ctx.lineTo(x - o, y + h - l);
   ctx.stroke();
+  ctx.restore();
+}
+
+function getCornerLen(w, h) {
+  return Math.round(Math.min(w, h) * CORNER_LEN_FACTOR);
+}
+
+function drawRoundedBox(ctx, x, y, w, h) {
+  const r = Math.max(10, Math.min(w, h) * 0.06);
+  ctx.save();
+  roundRectPath(ctx, x + 0.5, y + 0.5, Math.max(1, w - 1), Math.max(1, h - 1), r);
+  // Subtle glass gradient similar to reference
+  const grad = ctx.createLinearGradient(x, y, x + w, y);
+  grad.addColorStop(0, 'rgba(0,212,255,0.16)');
+  grad.addColorStop(0.55, 'rgba(50,120,220,0.14)');
+  grad.addColorStop(1, 'rgba(0,212,255,0.16)');
+  const prevFill = ctx.fillStyle;
+  ctx.fillStyle = grad;
+  ctx.fill();
+  ctx.fillStyle = prevFill;
+  ctx.restore();
+  // Decorative corner brackets outside the box (slightly offset)
+  drawCornerBrackets(ctx, x, y, w, h, getCornerLen(w, h), CORNER_OFFSET);
 }
 
 function drawBestGlow(ctx, x, y, w, h) {
   ctx.save();
   ctx.lineWidth = 3;
-  ctx.shadowBlur = 16;
-  ctx.shadowColor = 'rgba(197,164,109,0.65)';
-  ctx.strokeStyle = 'rgba(197,164,109,0.9)';
+  ctx.shadowBlur = 14;
+  ctx.shadowColor = 'rgba(0,212,255,0.35)';
+  ctx.strokeStyle = 'rgba(0,212,255,0.85)';
+  roundRectPath(ctx, x, y, w, h, Math.max(10, Math.min(w, h) * 0.06));
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawCrosshair(ctx, x, y, w, h) {
+  // Draw a centered plus sign inside the box
+  const cx = Math.round(x + w / 2);
+  const cy = Math.round(y + h / 2);
+  const len = Math.round(Math.min(w, h) * 0.08); // 8% of min dimension
+  ctx.save();
+  ctx.lineWidth = 2;
+  ctx.lineCap = 'round';
+  const col = getComputedStyle(document.documentElement).getPropertyValue('--box-color') || '#00D4FF';
+  ctx.strokeStyle = col.trim();
+  ctx.shadowColor = 'rgba(0,212,255,0.45)';
+  ctx.shadowBlur = 6;
   ctx.beginPath();
-  ctx.rect(x, y, w, h);
+  ctx.moveTo(cx - len, cy);
+  ctx.lineTo(cx + len, cy);
+  ctx.moveTo(cx, cy - len);
+  ctx.lineTo(cx, cy + len);
   ctx.stroke();
   ctx.restore();
 }
 
 function drawCapsuleLabel(ctx, x, y, text, badge) {
-  const padX = 8, padY = 5;
+  const padX = 10, padY = 6;
+  const dotR = 4; // small status dot radius
+  const dotGap = 6; // gap between dot and text
   ctx.save();
   ctx.font = '14px Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif';
-  const textW = Math.round(ctx.measureText(text).width);
-  const badgeText = badge ? String(badge) : '';
-  const badgePadX = 6;
-  const badgeW = badgeText ? Math.round(ctx.measureText(badgeText).width) + badgePadX * 2 : 0;
+  const label = text || '';
+  const textW = Math.round(ctx.measureText(label).width);
   const h = 18 + padY * 2;
-  const w = textW + padX * 2 + (badgeW ? (badgeW + 8) : 0);
-  // Background rectangular label
-  ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--label-bg') || 'rgba(0,0,0,0.6)';
+  // account for the dot inside the chip
+  const w = textW + padX * 2 + dotR * 2 + dotGap;
+  const bg = getComputedStyle(document.documentElement).getPropertyValue('--label-bg') || '#00D4FF';
+  const fg = getComputedStyle(document.documentElement).getPropertyValue('--label-fg') || '#072a31';
+
+  // soft shadow behind capsule
+  ctx.shadowColor = 'rgba(0,0,0,0.25)';
+  ctx.shadowBlur = 8;
+  ctx.fillStyle = bg;
   ctx.strokeStyle = 'transparent';
-  ctx.beginPath();
-  ctx.rect(x, y, w, h);
+  roundRectPath(ctx, x, y, w, h, 10);
   ctx.fill();
-  // Text
-  ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--label-fg') || '#fff';
-  ctx.fillText(text, x + padX, y + padY + 12);
-  // Badge (rectangular)
-  if (badgeW) {
-    const bx = x + padX + textW + 8;
-    const by = y + 4;
-    ctx.fillStyle = '#c5a46d';
-    ctx.beginPath();
-    ctx.rect(bx, by, badgeW, h - 8);
-    ctx.fill();
-    ctx.fillStyle = '#221a10';
-    ctx.fillText(badgeText, bx + badgePadX, y + padY + 12);
-  }
+
+  // turn off shadow for inner elements
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
+
+  // left green status dot
+  ctx.beginPath();
+  ctx.fillStyle = '#00E98A';
+  ctx.arc(x + padX + dotR, y + h / 2, dotR, 0, Math.PI * 2);
+  ctx.fill();
+
+  // text
+  ctx.fillStyle = fg;
+  ctx.fillText(label, x + padX + dotR * 2 + dotGap, y + padY + 12);
   ctx.restore();
 }
 
@@ -92,10 +180,12 @@ export async function drawDetections(ctx, result, onHotspotClick) {
   ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
   ctx.restore();
 
-  const lw = 2;
+  const lw = 4;
   ctx.lineWidth = lw;
-  ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--box-color') || '#2ee6a7';
-  ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--box-fill') || 'rgba(46,230,167,0.15)';
+  ctx.lineJoin = 'round';
+  ctx.lineCap = 'round';
+  ctx.strokeStyle = getComputedStyle(document.documentElement).getPropertyValue('--box-color') || '#00D4FF';
+  ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--box-fill') || 'rgba(0,212,255,0.06)';
   ctx.font = '14px Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif';
   lastMatches = [];
 
@@ -116,9 +206,16 @@ export async function drawDetections(ctx, result, onHotspotClick) {
           drawRoundedBox(ctx, box.originX, box.originY, box.width, box.height);
           // premium glow for the matched box
           drawBestGlow(ctx, box.originX, box.originY, box.width, box.height);
+          // centered crosshair
+          drawCrosshair(ctx, box.originX, box.originY, box.width, box.height);
 
           const pct = (confidence*100).toFixed(1) + '%';
-          drawCapsuleLabel(ctx, Math.round(box.originX), Math.max(0, Math.round(box.originY - 28)), entry.title || 'Artwork', pct);
+          {
+            const cornerLen = getCornerLen(box.width, box.height);
+            const labelX = Math.round(box.originX + cornerLen + CORNER_OFFSET + LABEL_GAP_FROM_TL);
+            const labelY = Math.max(0, Math.round(box.originY - LABEL_TOP_OFFSET));
+            drawCapsuleLabel(ctx, labelX, labelY, 'Artwork Detected');
+          }
 
           // Show placard with localized description
 
@@ -166,6 +263,7 @@ export async function drawDetections(ctx, result, onHotspotClick) {
     rh = Math.max(1, rh);
     det.__alignedBox = { originX: x, originY: y, width: rw, height: rh };
     drawRoundedBox(ctx, x, y, rw, rh);
+    drawCrosshair(ctx, x, y, rw, rh);
   }
 
   // Labels and matching per detection (limited set)
@@ -178,7 +276,7 @@ export async function drawDetections(ctx, result, onHotspotClick) {
         categoryLogCount++;
       }
       let name = cat.categoryName || 'artwork';
-      let uiLabel = `${name}`;
+      let uiLabel = `Artwork Detected`;
       let matched = null;
 
       try {
@@ -199,13 +297,16 @@ export async function drawDetections(ctx, result, onHotspotClick) {
         anyMatch = true;
       }
 
-      const labelX = Math.round(box.originX);
-      const labelY = Math.max(0, Math.round(box.originY - 28));
-      // If we have a matched artwork, show its confidence as badge, otherwise show detector score
-      const badge = (matched && matched.confidence != null)
-        ? `${(matched.confidence*100).toFixed(1)}%`
-        : (cat?.score != null ? `${(cat.score*100).toFixed(0)}%` : null);
-      drawCapsuleLabel(ctx, labelX, labelY, uiLabel, badge);
+      {
+        const cornerLen = getCornerLen(box.width, box.height);
+        const labelX = Math.round(box.originX + cornerLen + CORNER_OFFSET + LABEL_GAP_FROM_TL);
+        const labelY = Math.max(0, Math.round(box.originY - LABEL_TOP_OFFSET));
+        // If we have a matched artwork, show its confidence as badge, otherwise show detector score
+        const badge = (matched && matched.confidence != null)
+          ? `${(matched.confidence*100).toFixed(1)}%`
+          : (cat?.score != null ? `${(cat.score*100).toFixed(0)}%` : null);
+        drawCapsuleLabel(ctx, labelX, labelY, uiLabel, badge);
+      }
     }
   }
 
@@ -216,6 +317,8 @@ export async function drawDetections(ctx, result, onHotspotClick) {
     stickyBest = { entry: best.entry, confidence: best.confidence, box: best.box, until: t + STICKY_MS };
     // Glow highlight on best
     drawBestGlow(ctx, best.box.originX, best.box.originY, best.box.width, best.box.height);
+    // Crosshair on best (ensure visibility above fill)
+    drawCrosshair(ctx, best.box.originX, best.box.originY, best.box.width, best.box.height);
     // Hotspot and hint for current best
     renderHotspot(best, onHotspotClick);
     placeHintOverBox(best.box);
@@ -229,6 +332,7 @@ export async function drawDetections(ctx, result, onHotspotClick) {
     // Keep last best briefly to avoid flicker
     const b = stickyBest;
     drawBestGlow(ctx, b.box.originX, b.box.originY, b.box.width, b.box.height);
+    drawCrosshair(ctx, b.box.originX, b.box.originY, b.box.width, b.box.height);
   } else {
     stickyBest = null;
     lastRecognizedKey = null;
