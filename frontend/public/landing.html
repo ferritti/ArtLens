@@ -12,7 +12,7 @@
       --card-bg: #ffffff;
       --ink: #0f1b2d;
       --muted: #60708a;
-      --primary: #1557ff; /* CTA blue */
+      --primary: #0f49e0; /* CTA blue (slightly darker) */
       --primary-ink: #ffffff;
       --accent: #ff9c07;  /* orange outline */
       --radius-card: 28px;
@@ -59,24 +59,40 @@
     p.subtitle {
       text-align: center; color: var(--muted);
       font-size: clamp(16px, 2.6vw, 22px);
-      margin: 0 0 clamp(20px, 4.2vw, 36px);
+      margin: 0 0 clamp(26px, 4.8vw, 40px);
     }
-
-    .actions { display: grid; gap: 18px; margin: 0 auto clamp(18px, 3.6vw, 30px); width: min(600px, 100%); }
-    .btn { appearance: none; border: 0; cursor: pointer; border-radius: 16px; padding: 22px 24px; min-height: 68px; font-weight: 700; font-size: clamp(18px, 3.6vw, 24px); display: inline-flex; align-items: center; justify-content: center; gap: 16px; }
-    .btn .ico { width: 24px; height: 24px; flex: 0 0 auto; }
+ 
+    .actions { display: grid; gap: 26px; margin: 0 auto clamp(22px, 4vw, 36px); width: min(600px, 100%); }
+    .btn { appearance: none; border: 0; cursor: pointer; border-radius: 12px; padding: 22px 24px; min-height: 68px; font-weight: 700; font-size: clamp(18px, 3.6vw, 24px); display: inline-flex; align-items: center; justify-content: center; gap: 16px; }
+    .btn .ico { width: 22px; height: 22px; flex: 0 0 auto; }
     .btn-primary .ico { filter: brightness(0) invert(1); }
     .actions .btn { width: 100%; }
 
-    .btn-primary { background: var(--primary); color: var(--primary-ink); box-shadow: 0 16px 36px rgba(18,33,55,0.22), 0 2px 0 rgba(255,255,255,0.45) inset; }
-    .btn-primary:hover { filter: brightness(0.98); box-shadow: 0 18px 36px rgba(21,87,255,0.45); }
+    .btn-primary { background: var(--primary); color: var(--primary-ink); box-shadow: 0 10px 24px rgba(18,33,55,0.16), 0 1px 0 rgba(255,255,255,0.35) inset; }
+    .btn-primary:hover { filter: brightness(0.98); box-shadow: 0 12px 28px rgba(21,87,255,0.30); }
 
-    .btn-outline { background: #fff; color: #c25c00; border: 3px solid var(--accent); box-shadow: 0 16px 36px rgba(18,33,55,0.12); }
+    .btn-outline { background: #fff; color: #c25c00; border: 3px solid var(--accent); box-shadow: 0 10px 22px rgba(18,33,55,0.10); }
     .btn-outline:hover { background: #fff7eb; }
 
     .divider { height: 1px; background: rgba(15,27,45,0.08); margin: clamp(8px, 2.6vw, 20px) 0; border-radius: 1px; }
 
     .foot { text-align: center; color: var(--muted); font-size: clamp(14px, 2.2vw, 18px); }
+
+    /* Make user icon inherit text color using mask */
+    .btn-outline .user-ico {
+      width: 22px;
+      height: 22px;
+      display: inline-block;
+      background-color: currentColor; /* same color as text (#c25c00) */
+      -webkit-mask-image: url('images/user.png');
+      -webkit-mask-repeat: no-repeat;
+      -webkit-mask-position: center;
+      -webkit-mask-size: contain;
+      mask-image: url('images/user.png');
+      mask-repeat: no-repeat;
+      mask-position: center;
+      mask-size: contain;
+    }
   </style>
 </head>
 <body>
@@ -100,7 +116,7 @@
           <span>Scan Artwork</span>
         </button>
         <button class="btn btn-outline" type="button" onclick="location.href='./admin.html'">
-          <svg class="ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-5 0-9 2.5-9 5.5V22h18v-2.5C21 16.5 17 14 12 14z"/></svg>
+          <span class="ico user-ico" aria-hidden="true"></span>
           <span>Curator Login</span>
         </button>
       </div>
