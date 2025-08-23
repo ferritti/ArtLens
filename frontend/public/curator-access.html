@@ -23,8 +23,6 @@
       --btn-ink:#ffffff;
       --accent-1:#ffb100; /* lock gradient start */
       --accent-2:#f78a00; /* lock gradient end */
-      --panel:#f6f9fc; /* demo credentials panel */
-      --panel-border:#e8eff6;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -90,10 +88,6 @@
     }
     .btn-primary:hover{ filter:brightness(0.98); box-shadow: 0 18px 34px rgba(20,70,230,0.30); }
 
-    /* Demo credentials panel */
-    .panel{ margin-top:22px; background:var(--panel); border:1px solid var(--panel-border); border-radius:16px; padding:22px; text-align:center; color:#51607a; }
-    .panel strong{ display:block; font-size:20px; color:#3b4a63; margin-bottom:8px; }
-    .panel .row{ line-height:1.9; font-size:16px; }
 
     /* Responsive small devices spacing tweaks */
     @media (max-width:480px){
@@ -136,11 +130,6 @@
         <button class="btn btn-primary" type="button">Sign In</button>
       </form>
 
-      <div class="panel" role="note" aria-live="polite">
-        <strong>Demo Credentials:</strong>
-        <div class="row">Email: curator@museum.com</div>
-        <div class="row">Password: password</div>
-      </div>
     </section>
   </div>
 </body>
