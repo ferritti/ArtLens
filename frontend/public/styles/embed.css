@@ -1,0 +1,5 @@
+/* Embedded mode: hide chrome and start card for seamless overlay */
+.topbar { display: none !important; }
+#info { display: none !important; }
+#hud { display: none !important; }
+html, body { background: #000; }
