@@ -48,12 +48,13 @@
     .top:hover{ opacity:0.85; }
 
     /* Lock badge */
-    .badge{ display:grid; place-items:center; width:120px; height:120px; margin:28px auto 18px; border-radius:50%;
-      background: radial-gradient(100% 100% at 30% 20%, #ffd36a, #ffb833 35%, #f39200 72%, #ef8a00 100%),
-                  linear-gradient(160deg, var(--accent-1), var(--accent-2));
-      box-shadow: 0 10px 24px rgba(246,148,0,0.35), inset 0 1px 0 rgba(255,255,255,0.45);
+    .badge{ display:grid; place-items:center; width:108px; height:108px; margin:28px auto 18px; border-radius:50%;
+      background:
+        radial-gradient(120% 120% at 32% 24%, #ffd36a 0%, #ffb23a 36%, rgba(255,178,46,0) 70%),
+        linear-gradient(180deg, #f39b00 0%, #e17400 100%);
+      box-shadow: 0 10px 24px rgba(225,120,0,0.35), inset 0 1px 0 rgba(255,255,255,0.45);
     }
-    .badge svg{ width:44px; height:44px; color:#fff; }
+    .badge svg{ width:40px; height:40px; color:#fff; }
 
     h1.title{ margin: 8px 0 8px; text-align:center; font-weight:800; color:var(--ink);
       font-size: clamp(28px, 5vw, 40px); letter-spacing:0.2px; }
@@ -72,7 +73,15 @@
     .field input::placeholder{ color:#98a6ba; }
     .field input:focus{ border-color:var(--focus); box-shadow: 0 0 0 3px rgba(47,102,243,0.15), 0 6px 18px rgba(16,33,55,0.08); }
 
-    .ico-in{ position:absolute; left:16px; top:50%; transform:translateY(-50%); width:24px; height:24px; color:#90a4bf; }
+    .ico-in{ position:absolute; left:16px; top:50%; transform:translateY(-50%); width:24px; height:24px; display:block; color:#90a4bf; }
+
+    /* Mask-based icons for inputs */
+    .ico-in.mask{ background-color:#90a4bf; -webkit-mask-repeat:no-repeat; -webkit-mask-position:center; -webkit-mask-size:contain; mask-repeat:no-repeat; mask-position:center; mask-size:contain; }
+    .ico-in.user-access{ -webkit-mask-image:url('images/user - access.png'); mask-image:url('images/user - access.png'); }
+    .ico-in.lock{ -webkit-mask-image:url('images/lock.png'); mask-image:url('images/lock.png'); }
+
+    /* White lock icon inside top badge */
+    .badge .ico-lock-white{ width:40px; height:40px; display:block; background:#fff; -webkit-mask-image:url('images/lock.png'); -webkit-mask-repeat:no-repeat; -webkit-mask-position:center; -webkit-mask-size:contain; mask-image:url('images/lock.png'); mask-repeat:no-repeat; mask-position:center; mask-size:contain; }
 
     /* Primary button */
     .btn{ appearance:none; border:0; border-radius:14px; height:60px; padding:0 22px; font-weight:800; font-size:18px; cursor:pointer; }
@@ -88,8 +97,8 @@
 
     /* Responsive small devices spacing tweaks */
     @media (max-width:480px){
-      .badge{ width:100px; height:100px; }
-      .badge svg{ width:38px; height:38px; }
+      .badge{ width:92px; height:92px; }
+      .badge .ico-lock-white{ width:34px; height:34px; }
       .btn, .field input{ height:56px; }
     }
   </style>
@@ -103,10 +112,7 @@
       </a>
 
       <div class="badge" aria-hidden="true">
-        <!-- White lock icon -->
-        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M17 9h-1V7a4 4 0 10-8 0v2H7a2 2 0 00-2 2v7a2 2 0 002 2h10a2 2 0 002-2v-7a2 2 0 00-2-2zm-7-2a2 2 0 114 0v2h-4V7z" fill="currentColor" opacity="0.95"/>
-        </svg>
+        <span class="ico-lock-white" aria-hidden="true"></span>
       </div>
 
       <h1 id="t" class="title">Curator Access</h1>
@@ -115,14 +121,14 @@
       <form action="#" method="post" novalidate>
         <label>Email
           <span class="field">
-            <svg class="ico-in" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M4 6h16a2 2 0 012 2v8a2 2 0 01-2 2H4a2 2 0 01-2-2V8a2 2 0 012-2zm0 2v.01L12 13l8-4.99V8l-8 5-8-5z"/></svg>
+            <span class="ico-in mask user-access" aria-hidden="true"></span>
             <input type="email" name="email" placeholder="curator@museum.com" autocomplete="username" />
           </span>
         </label>
 
         <label>Password
           <span class="field">
-            <svg class="ico-in" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17 9H7a2 2 0 00-2 2v7a2 2 0 002 2h10a2 2 0 002-2v-7a2 2 0 00-2-2zm-8-2a3 3 0 116 0v2h-6V7z"/></svg>
+            <span class="ico-in mask lock" aria-hidden="true"></span>
             <input type="password" name="password" placeholder="Enter your password" autocomplete="current-password" />
           </span>
         </label>
