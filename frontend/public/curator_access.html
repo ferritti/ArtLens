@@ -88,7 +88,6 @@
     }
     .btn-primary:hover{ filter:brightness(0.98); box-shadow: 0 18px 34px rgba(20,70,230,0.30); }
 
-
     /* Responsive small devices spacing tweaks */
     @media (max-width:480px){
       .badge{ width:92px; height:92px; }
@@ -162,7 +161,7 @@
             if (creds && email === String(creds.email || '').toLowerCase() && pass === String(creds.password || '')) {
               setAuthed();
               showMsg('Signed in. Redirecting…', true);
-              setTimeout(()=>{ location.href = './curator - dashboard.html'; }, 200);
+              setTimeout(()=>{ location.href = './curator_dashboard.html'; }, 200);
             } else {
               showMsg('Invalid email or password.');
             }
@@ -174,7 +173,7 @@
           initCreds();
           if (alreadyAuthed()) {
             // Optionally auto-redirect: uncomment next line if you want to skip login when already authenticated
-            // location.replace('./curator - dashboard.html');
+            // location.replace('./curator_dashboard.html');
           }
           const btn = document.getElementById('signInBtn');
           if (btn) btn.addEventListener('click', handleLogin);

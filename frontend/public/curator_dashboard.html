@@ -56,6 +56,10 @@
     .input::placeholder{ color:#9aabc0; }
     .input:focus{ border-color:#2f66f3; box-shadow: 0 0 0 3px rgba(47,102,243,0.15), 0 6px 18px rgba(16,33,55,0.08); }
 
+    .textarea{ min-height:120px; border:1px solid var(--line); border-radius:14px; padding: 12px 16px; font-size:16px; color:#24334f; background:#fff; outline:none; box-shadow: 0 2px 0 rgba(255,255,255,0.8) inset, 0 6px 18px rgba(16,33,55,0.04); resize: vertical; }
+    .textarea::placeholder{ color:#9aabc0; }
+    .textarea:focus{ border-color:#2f66f3; box-shadow: 0 0 0 3px rgba(47,102,243,0.15), 0 6px 18px rgba(16,33,55,0.08); }
+
     .actions{ display:flex; align-items:center; gap:14px; margin-top:4px; }
     .btn-primary{ padding: 14px 18px; min-height:48px; border-radius:12px; background: var(--btn); color: var(--btn-ink); font-weight:800; border:0; cursor:pointer; box-shadow: 0 12px 28px rgba(20,70,230,0.22); }
     .btn-primary:hover{ filter: brightness(0.98); box-shadow: 0 14px 30px rgba(20,70,230,0.28); }
@@ -70,10 +74,10 @@
         if (qs.has('logout')) { localStorage.removeItem(AUTH_KEY); }
         const authed = !!localStorage.getItem(AUTH_KEY);
         if (!authed) {
-          location.replace('./curator-access.html');
+          location.replace('./curator_access.html');
         }
       } catch (e) {
-        location.replace('./curator-access.html');
+        location.replace('./curator_access.html');
       }
     })();
   </script>
@@ -113,13 +117,30 @@
           <input id="title" class="input" name="title" placeholder="Enter artwork title" />
         </div>
 
-        <!-- Optional extra fields (kept for admin.js compatibility) -->
-        <input name="artist" type="hidden" />
-        <input name="year" type="hidden" />
-        <input name="museum" type="hidden" />
-        <input name="location" type="hidden" />
-        <textarea name="desc_it" hidden></textarea>
-        <textarea name="desc_en" hidden></textarea>
+        <div class="field">
+          <label class="lbl" for="artist">Artist</label>
+          <input id="artist" class="input" name="artist" placeholder="Enter artist name" />
+        </div>
+        <div class="field">
+          <label class="lbl" for="year">Year</label>
+          <input id="year" class="input" name="year" placeholder="e.g., 1620 ca." />
+        </div>
+        <div class="field">
+          <label class="lbl" for="museum">Museum</label>
+          <input id="museum" class="input" name="museum" placeholder="e.g., Uffizi" />
+        </div>
+        <div class="field">
+          <label class="lbl" for="location">Location</label>
+          <input id="location" class="input" name="location" placeholder="Room / Placement" />
+        </div>
+        <div class="field">
+          <label class="lbl" for="desc_it">IT description</label>
+          <textarea id="desc_it" class="textarea" name="desc_it" placeholder="Descrizione in italiano"></textarea>
+        </div>
+        <div class="field">
+          <label class="lbl" for="desc_en">EN description</label>
+          <textarea id="desc_en" class="textarea" name="desc_en" placeholder="Description in English"></textarea>
+        </div>
 
         <div class="actions">
           <button id="submitBtn" class="btn-primary" type="submit">Save Artwork</button>
@@ -153,7 +174,7 @@
       input?.addEventListener('change', ()=>{ if (input.files?.length) { out && (out.textContent = `${input.files.length} file selected`); } });
 
       const signOut = document.getElementById('signOutBtn');
-      signOut?.addEventListener('click', ()=>{ try { localStorage.removeItem('artlens.auth'); } catch(_) {} location.href = './curator-access.html'; });
+      signOut?.addEventListener('click', ()=>{ try { localStorage.removeItem('artlens.auth'); } catch(_) {} location.href = './curator_access.html'; });
     })();
   </script>
   <!-- Admin logic -->
