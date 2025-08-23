@@ -1,5 +1,6 @@
 import { initEmbeddingModel, embedFromCanvas } from './embedding.js';
 import { BACKEND_URL, CROP_SIZE } from './constants.js';
+import { getLang } from './db.js';
 
 const submitBtn = document.getElementById('submitBtn');
 const statusEl = document.getElementById('statusMsg');
@@ -122,6 +123,106 @@ if (formEl) formEl.addEventListener('submit', onSubmit);
   const isDashboard = document.querySelector('.cdash') || document.getElementById('f');
   if (!isDashboard) return;
 
+  // i18n dictionary for Curator Dashboard
+  const I18N = {
+    it: {
+      title: 'Dashboard Curatore',
+      subtitle: 'Gestisci la collezione del museo',
+      signOut: 'Esci',
+      tabs: ['Aggiungi Opera', 'Gestisci Collezione'],
+      sectionTitle: 'Aggiungi Nuova Opera',
+      dzStrong: 'Clicca per caricare',
+      dzSmall: 'PNG, JPG fino a 10MB',
+      fields: {
+        title: { label: 'Titolo', ph: 'Inserisci il titolo dell\'opera' },
+        artist: { label: 'Artista', ph: 'Inserisci il nome dell\'artista' },
+        year: { label: 'Anno', ph: 'es. 1620 ca.' },
+        museum: { label: 'Museo', ph: 'es. Uffizi' },
+        location: { label: 'Posizione', ph: 'Sala / Collocazione' },
+        desc_it: { label: 'Descrizione IT', ph: 'Descrizione in italiano' },
+        desc_en: { label: 'Descrizione EN', ph: 'Descrizione in inglese' }
+      },
+      save: 'Salva Opera',
+      filesSelected: (n)=> n ? `${n} file selezionati` : ''
+    },
+    en: {
+      title: 'Curator Dashboard',
+      subtitle: "Manage your museum's artwork collection",
+      signOut: 'Sign Out',
+      tabs: ['Add Artwork', 'Manage Collection'],
+      sectionTitle: 'Add New Artwork',
+      dzStrong: 'Click to upload',
+      dzSmall: 'PNG, JPG up to 10MB',
+      fields: {
+        title: { label: 'Title', ph: 'Enter artwork title' },
+        artist: { label: 'Artist', ph: 'Enter artist name' },
+        year: { label: 'Year', ph: 'e.g., 1620 ca.' },
+        museum: { label: 'Museum', ph: 'e.g., Uffizi' },
+        location: { label: 'Location', ph: 'Room / Placement' },
+        desc_it: { label: 'IT description', ph: 'Descrizione in italiano' },
+        desc_en: { label: 'EN description', ph: 'Description in English' }
+      },
+      save: 'Save Artwork',
+      filesSelected: (n)=> n ? `${n} file selected` : ''
+    }
+  };
+  function t(){ return I18N[getLang()] || I18N.it; }
+
+  function applyLang(){
+    const lang = getLang();
+    try { document.documentElement.setAttribute('lang', (lang === 'en' ? 'en' : 'it')); } catch {}
+    const tr = t();
+
+    const title = document.querySelector('.head .title');
+    const subtitle = document.querySelector('.head .subtitle');
+    if (title) title.innerHTML = (lang === 'en') ? 'Curator <br/>Dashboard' : 'Curatore <br/>Dashboard';
+    if (subtitle) subtitle.innerHTML = (lang === 'en') ? "Manage your museum's<br/>artwork collection" : 'Gestisci la collezione<br/>del museo';
+
+    const signOut = document.querySelector('#signOutBtn span');
+    if (signOut) signOut.textContent = tr.signOut;
+
+    const tabs = document.querySelectorAll('.tabs .tab');
+    if (tabs && tabs.length >= 2) {
+      tabs[0].textContent = tr.tabs[0];
+      tabs[1].textContent = tr.tabs[1];
+    }
+
+    const h2 = document.getElementById('addTitle');
+    if (h2) {
+      const ico = h2.querySelector('.h2-ico');
+      h2.textContent = tr.sectionTitle;
+      if (ico) { h2.prepend(ico); h2.insertBefore(document.createTextNode(' '), ico.nextSibling); }
+    }
+
+    const dz = document.getElementById('drop');
+    if (dz) {
+      const strong = dz.querySelector('strong');
+      const small = dz.querySelector('small');
+      if (strong) strong.textContent = tr.dzStrong;
+      if (small) small.textContent = tr.dzSmall;
+    }
+
+    // Fields labels and placeholders
+    const map = [
+      { id: 'title', key: 'title' },
+      { id: 'artist', key: 'artist' },
+      { id: 'year', key: 'year' },
+      { id: 'museum', key: 'museum' },
+      { id: 'location', key: 'location' },
+      { id: 'desc_it', key: 'desc_it' },
+      { id: 'desc_en', key: 'desc_en' }
+    ];
+    map.forEach(({id, key})=>{
+      const input = document.getElementById(id);
+      const label = document.querySelector(`label[for="${id}"]`);
+      if (label) label.textContent = tr.fields[key].label;
+      if (input && 'placeholder' in input) input.placeholder = tr.fields[key].ph;
+    });
+
+    const saveBtn = document.getElementById('submitBtn');
+    if (saveBtn) saveBtn.textContent = tr.save;
+  }
+
   // Auth guard and optional logout handling
   try {
     const AUTH_KEY = 'artlens.auth';
@@ -133,6 +234,9 @@ if (formEl) formEl.addEventListener('submit', onSubmit);
     try { location.replace('./curator_access.html'); } catch(_) {}
     return;
   }
+
+  applyLang();
+  window.addEventListener('storage', (e)=>{ if (e.key === 'lang') applyLang(); });
 
   // Dropzone behavior for image uploads
   const drop = document.getElementById('drop');
@@ -174,7 +278,15 @@ if (formEl) formEl.addEventListener('submit', onSubmit);
   }
   if (input) input.addEventListener('change', ()=>{
     const n = input.files?.length || 0;
-    if (out) { out.textContent = n ? `${n} file selected` : ''; }
+    if (out) {
+      try {
+        const lang = getLang();
+        const tr = (I18N[lang] || I18N.it);
+        out.textContent = tr.filesSelected(n);
+      } catch(_) {
+        out.textContent = n ? `${n} file selected` : '';
+      }
+    }
     if (n) renderPreviews(input.files);
     else clearPreviews();
   });
@@ -184,6 +296,6 @@ if (formEl) formEl.addEventListener('submit', onSubmit);
   if (form) form.addEventListener('reset', ()=>{ clearPreviews(); if (out) out.textContent=''; });
 
   // Sign out
-  const signOut = document.getElementById('signOutBtn');
-  if (signOut) signOut.addEventListener('click', ()=>{ try { localStorage.removeItem('artlens.auth'); } catch(_) {} location.href = './curator_access.html'; });
+  const signOutBtn = document.getElementById('signOutBtn');
+  if (signOutBtn) signOutBtn.addEventListener('click', ()=>{ try { localStorage.removeItem('artlens.auth'); } catch(_) {} location.href = './curator_access.html'; });
 })();

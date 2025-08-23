@@ -31,26 +31,59 @@ function initLanguageToggle() {
 
 function applyLanguageToUI() {
   const lang = getLang();
-  const t = {
+  const dict = {
     it: {
+      // Scanner UI strings
       title: "Scopri l'arte intorno a te",
       status: "Inquadra le opere con la fotocamera",
       start: "Avvia",
       back: "Torna alla Fotocamera",
+      // Homepage strings
+      home: {
+        subtitle: "Scopri l'arte attraverso la tecnologia",
+        scan: "Scansiona Opera",
+        curator: "Accesso Curatore",
+        foot: "Basato su un sistema di riconoscimento AI",
+      }
     },
     en: {
       title: "Discover art around you",
       status: "Point the camera at artworks",
       start: "Start",
       back: "Back to Camera",
+      home: {
+        subtitle: "Discover art through technology",
+        scan: "Scan Artwork",
+        curator: "Curator Login",
+        foot: "Powered by AI recognition system",
+      }
     }
-  }[lang] || {};
+  };
+  const t = dict[lang] || {};
 
+  // Set <html lang=".."> for accessibility/SEO
+  try { document.documentElement.setAttribute('lang', (lang === 'en' ? 'en' : 'it')); } catch {}
+
+  // Scanner UI (if present)
   const titleEl = document.querySelector('.card-title');
   if (titleEl && t.title) titleEl.textContent = t.title;
   if (statusEl && t.status) statusEl.textContent = t.status;
   if (startBtn && t.start) startBtn.textContent = t.start;
   if (backBtn && t.back) backBtn.textContent = t.back;
+
+  // Homepage UI (gate on presence of #scanBtn)
+  const scanBtnEl = document.getElementById('scanBtn');
+  if (scanBtnEl && t.home) {
+    const subtitleEl = document.querySelector('.card > p.subtitle');
+    const curatorBtnEl = document.getElementById('curatorBtn');
+    const scanLabelEl = scanBtnEl.querySelector('span:last-child');
+    const curatorLabelEl = curatorBtnEl ? curatorBtnEl.querySelector('span:last-child') : null;
+    const footEl = document.querySelector('.card .foot');
+    if (subtitleEl && t.home.subtitle) subtitleEl.textContent = t.home.subtitle;
+    if (scanLabelEl && t.home.scan) scanLabelEl.textContent = t.home.scan;
+    if (curatorLabelEl && t.home.curator) curatorLabelEl.textContent = t.home.curator;
+    if (footEl && t.home.foot) footEl.textContent = t.home.foot;
+  }
 }
 
 // Bottom sheet gestures (swipe-to-close)
