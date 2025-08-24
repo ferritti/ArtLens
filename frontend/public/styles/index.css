@@ -43,7 +43,7 @@ body {
 .brand .word { font: 600 16px/1 Inter, system-ui; letter-spacing: 3px; color: #b9c2cf; }
 
 h1.title {
-  font: 600 clamp(34px, 5.2vw, 48px)/1.1 "Cormorant Garamond", Georgia, serif;
+  font: 600 clamp(38px, 5.8vw, 54px)/1.1 "Cormorant Garamond", Georgia, serif;
   text-align: center; margin: 0 0 10px;
   color: #17223a;
 }
