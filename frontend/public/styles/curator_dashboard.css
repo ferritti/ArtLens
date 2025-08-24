@@ -62,3 +62,24 @@ input[type="file"]{ position:absolute; width:1px; height:1px; overflow:hidden; c
 .preview figcaption{ padding:6px 8px; font-size:12px; color:#5e718f; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 
 #statusMsg{ color:#5e718f; font-size:14px; min-height:1.2em; }
+
+/* Collection management */
+.mgmt-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:10px; }
+.mgmt-head h2{ margin:0; font-size: clamp(22px, 4.4vw, 28px); }
+.mgmt-count{ color:#6b7a94; font-weight:700; }
+
+.table-wrap{ width:100%; overflow:auto; border-radius:16px; border:1px solid var(--line); background:#fff; }
+.mgmt-table{ width:100%; border-collapse:separate; border-spacing:0; }
+.mgmt-table thead th{ background:#f7f9fd; color:#1e2b47; text-align:left; padding:16px 18px; font-weight:800; border-bottom:1px solid var(--line); }
+.mgmt-table tbody td{ padding:18px; border-bottom:1px solid var(--line); color:#24334f; }
+.mgmt-table tbody tr:hover{ background:#fafcff; }
+.mgmt-table .actions-col{ width:220px; text-align:right; }
+.mgmt-table .col-title{ font-weight:700; font-size:18px; color:#1d2b4a; }
+.mgmt-table .col-images{ color:#495c7b; font-weight:700; }
+
+/* Action buttons */
+.btn-edit{ display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:12px; border:2px solid #c7d5ff; color:#1c4be9; background:#eef3ff; font-weight:800; cursor:pointer; margin-right:10px; }
+.btn-edit:hover{ filter:brightness(0.98); }
+.btn-edit span{ display:inline-block; }
+.btn-del{ display:inline-flex; align-items:center; justify-content:center; width:44px; height:44px; border-radius:12px; border:2px solid #ffd4d4; background:#fff4f4; color:#d91c1c; cursor:pointer; }
+.btn-del:hover{ filter:brightness(0.98); }

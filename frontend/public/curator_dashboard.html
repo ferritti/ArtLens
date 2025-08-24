@@ -26,7 +26,7 @@
       <button class="tab" role="tab" aria-selected="false">Manage Collection</button>
     </nav>
 
-    <section class="card" aria-labelledby="addTitle">
+    <section id="addSection" class="card" aria-labelledby="addTitle">
       <h2 id="addTitle"><span class="h2-ico">+</span> Add New Artwork</h2>
 
       <form id="f">
@@ -74,6 +74,27 @@
           <div id="statusMsg" aria-live="polite"></div>
         </div>
       </form>
+    </section>
+
+    <section id="manageSection" class="card" aria-labelledby="mgmtTitle" style="display:none">
+      <div class="mgmt-head">
+        <h2 id="mgmtTitle">Collection Management</h2>
+        <div class="mgmt-count"><span id="mgmtCount">0</span> artworks in collection</div>
+      </div>
+      <div class="table-wrap">
+        <table id="collectionTable" class="mgmt-table" aria-describedby="mgmtTitle">
+          <thead>
+            <tr>
+              <th>Title</th>
+              <th>Artist</th>
+              <th>Year</th>
+              <th>Images</th>
+              <th class="actions-col">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="collectionBody"></tbody>
+        </table>
+      </div>
     </section>
   </div>
 

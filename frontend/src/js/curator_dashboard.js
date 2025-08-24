@@ -159,7 +159,7 @@ if (formEl) formEl.addEventListener('submit', onSubmit);
         year: { label: 'Year', ph: 'e.g., 1620 ca.' },
         museum: { label: 'Museum', ph: 'e.g., Uffizi' },
         location: { label: 'Location', ph: 'Room / Placement' },
-        desc_it: { label: 'IT description', ph: 'Descrizione in italiano' },
+        desc_it: { label: 'IT description', ph: 'Description in Italian' },
         desc_en: { label: 'EN description', ph: 'Description in English' }
       },
       save: 'Save Artwork',
@@ -298,4 +298,110 @@ if (formEl) formEl.addEventListener('submit', onSubmit);
   // Sign out
   const signOutBtn = document.getElementById('signOutBtn');
   if (signOutBtn) signOutBtn.addEventListener('click', ()=>{ try { localStorage.removeItem('artlens.auth'); } catch(_) {} location.href = './curator_access.html'; });
+  // ------------------------------
+  // Manage Collection: tabs + table
+  // ------------------------------
+  const tabs = document.querySelectorAll('.tabs .tab');
+  const addSection = document.getElementById('addSection');
+  const manageSection = document.getElementById('manageSection');
+  const tbody = document.getElementById('collectionBody');
+  const countEl = document.getElementById('mgmtCount');
+
+  function switchTab(idx){
+    tabs.forEach((b,i)=>{ b.classList.toggle('active', i===idx); b.setAttribute('aria-selected', i===idx ? 'true' : 'false'); });
+    if (addSection) addSection.style.display = (idx===0 ? '' : 'none');
+    if (manageSection) manageSection.style.display = (idx===1 ? '' : 'none');
+    if (idx===1) {
+      // lazy load on first open or refresh every time
+      loadCollection();
+    }
+  }
+
+  tabs.forEach((b,i)=> b.addEventListener('click', ()=> switchTab(i)));
+
+  function iconEdit(){
+    return `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>`;
+  }
+  function iconTrash(){
+    return `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2"/></svg>`;
+  }
+
+  async function loadCollection(){
+    try {
+      if (tbody) tbody.innerHTML = '';
+      const res = await fetch(`${BACKEND_URL}/catalog?with_image_counts=1`);
+      const items = await res.json();
+      renderCollection(Array.isArray(items) ? items : []);
+    } catch (e) {
+      console.error('Load collection error', e);
+      if (tbody) tbody.innerHTML = `<tr><td colspan="5" style="color:#a33;">Failed to load collection</td></tr>`;
+    }
+  }
+
+  function renderCollection(items){
+    if (countEl) countEl.textContent = String(items.length || 0);
+    if (!tbody) return;
+    if (!items.length) {
+      tbody.innerHTML = `<tr><td colspan="5" style="color:#5e718f;">No artworks yet</td></tr>`;
+      return;
+    }
+    const frag = document.createDocumentFragment();
+    items.forEach((it)=>{
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td class="col-title">${escapeHtml(it.title || '')}</td>
+        <td>${escapeHtml(it.artist || '')}</td>
+        <td>${escapeHtml(it.year || '')}</td>
+        <td class="col-images">${Number(it.image_count||0)} file(s)</td>
+        <td class="col-actions">
+          <button class="btn-edit" data-id="${it.id}" type="button" title="Edit">${iconEdit()}<span>Edit</span></button>
+          <button class="btn-del" data-id="${it.id}" type="button" title="Delete">${iconTrash()}</button>
+        </td>
+      `;
+      frag.appendChild(tr);
+    });
+    tbody.innerHTML = '';
+    tbody.appendChild(frag);
+
+    // attach handlers
+    tbody.querySelectorAll('.btn-del').forEach(btn=>{
+      btn.addEventListener('click', async (e)=>{
+        const id = e.currentTarget.getAttribute('data-id');
+        if (!id) return;
+        if (!confirm('Delete this artwork? This cannot be undone.')) return;
+        let token = '';
+        try { token = localStorage.getItem('X_ADMIN_TOKEN') || ''; } catch{}
+        if (!token) token = prompt('Enter X-Admin-Token') || '';
+        if (!token) return;
+        try {
+          const resp = await fetch(`${BACKEND_URL}/artworks/${encodeURIComponent(id)}`, { method:'DELETE', headers: { 'X-Admin-Token': token }});
+          if (!resp.ok) {
+            const t = await resp.text();
+            throw new Error(`${resp.status} ${t}`);
+          }
+          await loadCollection();
+        } catch(err){
+          alert('Delete failed: ' + (err?.message || err));
+        }
+      });
+    });
+
+    tbody.querySelectorAll('.btn-edit').forEach(btn=>{
+      btn.addEventListener('click', (e)=>{
+        const id = e.currentTarget.getAttribute('data-id');
+        alert(`Edit not implemented yet for ${id}`);
+      });
+    });
+  }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"]+/g, (c)=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"})[c]);
+  }
+
+  // Default active tab = first (Add). Manage is lazy loaded on click.
+  // If URL has ?tab=manage switch to it.
+  try {
+    const q = new URLSearchParams(location.search);
+    if (q.get('tab') === 'manage') switchTab(1);
+  } catch {}
 })();

@@ -1,6 +1,5 @@
 import { appEl, videoEl, hintEl, hotspotsEl, infoEl } from './dom.js';
 import { getLang } from './db.js';
-import { BACKEND_URL } from './constants.js';
 
 let hintHideTimer = null;
 
@@ -129,13 +128,11 @@ export function renderHotspot(match, onClick) {
   const aria = lang === 'en' ? 'Open artwork details' : 'Apri dettagli opera';
   hs.setAttribute('aria-label', aria);
 
-  // Insert tap icon image served by frontend with backend fallback
+  // Insert tap icon image served by frontend only
   const img = document.createElement('img');
   img.src = 'images/tap.webp';
   img.alt = '';
   img.draggable = false;
-  // Fallback to backend-hosted image if local asset missing
-  img.onerror = () => { try { img.onerror = null; img.src = `${BACKEND_URL}/images/tap.webp`; } catch {} };
   hs.appendChild(img);
 
   const handle = (ev) => {

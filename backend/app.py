@@ -1,6 +1,5 @@
 from fastapi import FastAPI, HTTPException, Header
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Optional, Dict, Any, Tuple
 import os
@@ -39,10 +38,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Serve static images (e.g., hotspot icon) from backend/images at /images
-IMAGES_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "images"))
-if os.path.isdir(IMAGES_DIR):
-    app.mount("/images", StaticFiles(directory=IMAGES_DIR), name="images")
+# Static images are served by the frontend only; backend no longer mounts /images
 
 # ----------------------------------------------------------------------------
 # In-memory cache (populated from Supabase)
@@ -114,15 +110,31 @@ def health():
 
 
 @app.get("/catalog", response_model=List[CatalogItem])
-def get_catalog():
-    rows = run(
-        """
-        select id, title, artist, year, museum, location, descriptions
-        from artworks
-        order by title nulls last
-        """
-    ).mappings().all()
-    return [dict(r) for r in rows]
+def get_catalog(with_image_counts: bool = False):
+    if with_image_counts:
+        rows = run(
+            """
+            select a.id, a.title, a.artist, a.year, a.museum, a.location, a.descriptions,
+                   coalesce(dc.cnt, 0) as image_count
+            from artworks a
+            left join (
+              select artwork_id, count(*) as cnt
+              from descriptors
+              group by artwork_id
+            ) as dc on dc.artwork_id = a.id
+            order by a.title nulls last
+            """
+        ).mappings().all()
+        return [dict(r) for r in rows]
+    else:
+        rows = run(
+            """
+            select id, title, artist, year, museum, location, descriptions
+            from artworks
+            order by title nulls last
+            """
+        ).mappings().all()
+        return [dict(r) for r in rows]
 
 
 @app.get("/descriptors", response_model=Dict[str, List[float]])
@@ -295,6 +307,26 @@ def upsert_artwork(art: ArtworkUpsert, x_admin_token: str = Header(default="")):
         print("[ArtLens] upsert error:", e)
         raise HTTPException(status_code=500, detail="Failed to persist")
     return {"status": "ok", "id": art_id}
+
+
+@app.delete("/artworks/{art_id}")
+def delete_artwork(art_id: str, x_admin_token: str = Header(default="")):
+    if not ADMIN_TOKEN or x_admin_token != ADMIN_TOKEN:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    # Delete the artwork; descriptors have ON DELETE CASCADE
+    res = run("delete from artworks where id = :id", {"id": art_id})
+    # rowcount is available on cursor result proxy; consider 0 as not found
+    try:
+        count = getattr(res, "rowcount", None)
+    except Exception:
+        count = None
+    if count == 0:
+        raise HTTPException(status_code=404, detail="Artwork not found")
+    try:
+        _refresh_cache_from_db()
+    except Exception as re:
+        print("[ArtLens] cache refresh error after delete:", re)
+    return {"status": "ok", "deleted": art_id}
 
 
 @app.get("/health_db")
