@@ -37,7 +37,7 @@ function applyLanguageToUI() {
       title: "Scopri l'arte intorno a te",
       status: "Inquadra le opere con la fotocamera",
       start: "Avvia",
-      back: "Torna alla Fotocamera",
+      back: "Back",
       // Homepage strings
       home: {
         subtitle: "Scopri l'arte attraverso la tecnologia",
@@ -50,7 +50,7 @@ function applyLanguageToUI() {
       title: "Discover art around you",
       status: "Point the camera at artworks",
       start: "Start",
-      back: "Back to Camera",
+      back: "Back",
       home: {
         subtitle: "Discover art through technology",
         scan: "Scan Artwork",
