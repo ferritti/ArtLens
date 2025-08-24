@@ -148,7 +148,7 @@ if (formEl) formEl.addEventListener('submit', onSubmit);
       manage: {
         sectionTitle: 'Gestione Collezione',
         countSuffix: 'opere in collezione',
-        headers: { title: 'Titolo', images: 'Immagini', actions: 'Azioni' },
+        headers: { title: 'Titolo', images: 'Immagini', actions: '' },
         loadFailRow: 'Impossibile caricare la collezione',
         emptyRow: 'Nessuna opera presente',
         filesCount: (n)=> n===1 ? '1 file' : `${n} file`,
@@ -193,7 +193,7 @@ if (formEl) formEl.addEventListener('submit', onSubmit);
       manage: {
         sectionTitle: 'Collection Management',
         countSuffix: 'artworks in collection',
-        headers: { title: 'Title', images: 'Images', actions: 'Actions' },
+        headers: { title: 'Title', images: 'Images', actions: '' },
         loadFailRow: 'Failed to load collection',
         emptyRow: 'No artworks yet',
         filesCount: (n)=> n===1 ? '1 file' : `${n} files`,
@@ -429,7 +429,7 @@ if (formEl) formEl.addEventListener('submit', onSubmit);
         <td class=\"col-title\">${escapeHtml(it.title || '')}</td>
         <td class=\"col-images\">${trm.filesCount(n)}</td>
         <td class=\"col-actions\">
-          <button class=\"btn-edit\" data-id=\"${it.id}\" type=\"button\" title=\"${trm.edit}\">${iconEdit()}<span>${trm.edit}</span></button>
+          <button class=\"btn-edit\" data-id=\"${it.id}\" type=\"button\" title=\"${trm.edit}\" aria-label=\"${trm.edit}\">${iconEdit()}</button>
           <button class=\"btn-del\" data-id=\"${it.id}\" type=\"button\" title=\"${trm.delete}\" aria-label=\"${trm.delete}\">${iconTrash()}</button>
         </td>
       `;
