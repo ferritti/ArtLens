@@ -83,3 +83,33 @@ input[type="file"]{ position:absolute; width:1px; height:1px; overflow:hidden; c
 .btn-edit span{ display:inline-block; }
 .btn-del{ display:inline-flex; align-items:center; justify-content:center; width:44px; height:44px; border-radius:12px; border:2px solid #ffd4d4; background:#fff4f4; color:#d91c1c; cursor:pointer; }
 .btn-del:hover{ filter:brightness(0.98); }
+
+/* Edit Modal */
+.md-overlay{ position:fixed; inset:0; background: rgba(8,18,36,0.55); display:flex; align-items:center; justify-content:center; padding:20px; z-index:1000; }
+.md-card{ width:min(760px, 100%); background:#fff; border-radius:18px; box-shadow: 0 30px 80px rgba(12,28,64,0.35); padding:22px; }
+.md-header{ display:flex; align-items:center; justify-content:space-between; }
+.md-title{ margin:0; font-size:26px; font-weight:800; color:#1d2842; }
+.md-close{ width:36px; height:36px; border-radius:10px; border:1px solid #e3eaf7; background:#fff; color:#3a4b6b; cursor:pointer; display:inline-grid; place-items:center; }
+.md-body{ margin-top:16px; }
+.md-grid{ display:grid; grid-template-columns: 1fr 1fr; gap:16px; }
+.md-grid .full{ grid-column: 1 / -1; }
+.md-label{ font-weight:700; color:#1e2b47; font-size:14px; margin-bottom:6px; }
+.md-input, .md-textarea{ width:100%; border:1px solid var(--line); border-radius:12px; background:#fff; color:#24334f; box-shadow: 0 2px 0 rgba(255,255,255,0.8) inset, 0 6px 18px rgba(16,33,55,0.04); }
+.md-input{ height:54px; padding:0 14px; font-size:16px; }
+.md-textarea{ min-height:90px; padding:10px 14px; font-size:15px; resize:vertical; }
+.md-input:focus, .md-textarea:focus{ outline:none; border-color:#2f66f3; box-shadow: 0 0 0 3px rgba(47,102,243,0.15), 0 6px 18px rgba(16,33,55,0.08); }
+
+.file-sec{ margin-top:14px; }
+.file-sec h3{ margin:8px 0 8px; font-size:20px; color:#1e2b47; }
+.file-list{ display:grid; gap:10px; }
+.file-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px; border-radius:12px; background:#f7fbff; border:1px solid #e1eaf6; }
+.file-name{ font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; color:#213150; font-weight:700; }
+.file-del{ width:40px; height:40px; display:inline-grid; place-items:center; border-radius:12px; border:2px solid #ffd4d4; background:#fff4f4; color:#d91c1c; cursor:pointer; }
+.file-del:hover{ filter:brightness(0.98); }
+
+.add-row{ display:flex; gap:10px; margin-top:6px; }
+.add-row .md-input{ flex:1; }
+.add-btn{ padding: 0 16px; min-width:80px; border-radius:12px; border:2px solid #c7d5ff; background:#eef3ff; color:#1c4be9; font-weight:800; cursor:pointer; }
+
+.md-footer{ margin-top:18px; display:flex; justify-content:flex-end; gap:12px; }
+.btn-cancel{ padding: 12px 16px; border-radius:12px; border:1px solid #d8e2f0; background:#fff; color:#1b2740; font-weight:700; cursor:pointer; }

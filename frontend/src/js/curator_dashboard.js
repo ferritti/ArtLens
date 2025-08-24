@@ -387,7 +387,7 @@ if (formEl) formEl.addEventListener('submit', onSubmit);
     tbody.querySelectorAll('.btn-edit').forEach(btn=>{
       btn.addEventListener('click', (e)=>{
         const id = e.currentTarget.getAttribute('data-id');
-        alert(`Edit not implemented yet for ${id}`);
+        if (id) openEditModal(id);
       });
     });
   }
@@ -402,4 +402,202 @@ if (formEl) formEl.addEventListener('submit', onSubmit);
     const q = new URLSearchParams(location.search);
     if (q.get('tab') === 'manage') switchTab(1);
   } catch {}
+
+  // ------------------------------
+  // Edit Modal
+  // ------------------------------
+  async function openEditModal(artId){
+    const ov = document.createElement('div');
+    ov.className = 'md-overlay';
+    ov.innerHTML = `
+      <div class="md-card" role="dialog" aria-modal="true" aria-labelledby="mdTitle">
+        <div class="md-header">
+          <h3 id="mdTitle" class="md-title">Edit Artwork</h3>
+          <button class="md-close" type="button" title="Close" aria-label="Close">&times;</button>
+        </div>
+        <div class="md-body">
+          <div class="md-grid">
+            <div>
+              <div class="md-label">Title</div>
+              <input id="md_title" class="md-input" />
+            </div>
+            <div>
+              <div class="md-label">Artist</div>
+              <input id="md_artist" class="md-input" />
+            </div>
+            <div>
+              <div class="md-label">Year</div>
+              <input id="md_year" class="md-input" />
+            </div>
+            <div>
+              <div class="md-label">Museum</div>
+              <input id="md_museum" class="md-input" />
+            </div>
+            <div class="full">
+              <div class="md-label">Location</div>
+              <input id="md_location" class="md-input" />
+            </div>
+            <div class="full">
+              <div class="md-label">Italian Description</div>
+              <textarea id="md_desc_it" class="md-textarea"></textarea>
+            </div>
+            <div class="full">
+              <div class="md-label">English Description</div>
+              <textarea id="md_desc_en" class="md-textarea"></textarea>
+            </div>
+          </div>
+
+          <div class="file-sec">
+            <h3>Image Files</h3>
+            <div id="md_file_list" class="file-list"></div>
+            <div class="add-row">
+              <input id="md_add_filename" class="md-input" placeholder="Enter image filename (e.g., artwork_main.jpg)" readonly />
+              <button id="md_add_btn" class="add-btn" type="button">+ Add</button>
+              <input id="md_hidden_file" type="file" accept="image/png,image/jpeg" multiple style="display:none" />
+            </div>
+          </div>
+
+          <div class="md-footer">
+            <button id="md_cancel" type="button" class="btn-cancel">Cancel</button>
+            <button id="md_save" type="button" class="btn-primary">Save Changes</button>
+          </div>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(ov);
+
+    const close = ()=>{ try { ov.remove(); } catch(_){} };
+    ov.querySelector('.md-close')?.addEventListener('click', close);
+    ov.querySelector('#md_cancel')?.addEventListener('click', close);
+
+    // Fetch details
+    let data;
+    try {
+      const r = await fetch(`${BACKEND_URL}/artworks/${encodeURIComponent(artId)}`);
+      if (!r.ok) throw new Error(await r.text());
+      data = await r.json();
+    } catch (e) {
+      alert('Failed to load artwork details');
+      close();
+      return;
+    }
+
+    // Prefill fields
+    const $ = (id)=> ov.querySelector(id);
+    $('#md_title').value = data.title || '';
+    $('#md_artist').value = data.artist || '';
+    $('#md_year').value = data.year || '';
+    $('#md_museum').value = data.museum || '';
+    $('#md_location').value = data.location || '';
+    const desc = (data.descriptions && typeof data.descriptions === 'object') ? data.descriptions : {};
+    $('#md_desc_it').value = desc.it || '';
+    $('#md_desc_en').value = desc.en || '';
+
+    const listEl = $('#md_file_list');
+    const hiddenFile = $('#md_hidden_file');
+    const addBtn = $('#md_add_btn');
+    const addName = $('#md_add_filename');
+    const usedIds = new Set((data.descriptors||[]).map(d=> String(d.descriptor_id)));
+    const existing = Array.isArray(data.descriptors) ? [...data.descriptors] : [];
+    const pending = [];
+
+    function makeUnique(base){
+      let b = base || 'img';
+      let i = 2;
+      while (usedIds.has(b)) { b = `${base}-${i++}`; }
+      usedIds.add(b);
+      return b;
+    }
+
+    function renderList(){
+      if (!listEl) return;
+      listEl.innerHTML = '';
+      const frag = document.createDocumentFragment();
+      // Existing items
+      existing.forEach((d)=>{
+        const row = document.createElement('div');
+        row.className = 'file-row';
+        row.innerHTML = `<div class="file-name">${escapeHtml(d.descriptor_id)}</div>` +
+          `<button class="file-del" type="button" title="Delete">${iconTrash()}</button>`;
+        row.querySelector('.file-del').addEventListener('click', async ()=>{
+          if (!confirm(`Delete image \"${d.descriptor_id}\"?`)) return;
+          let token = '';
+          try { token = localStorage.getItem('X_ADMIN_TOKEN') || ''; } catch{}
+          if (!token) token = prompt('Enter X-Admin-Token') || '';
+          if (!token) return;
+          try {
+            const resp = await fetch(`${BACKEND_URL}/artworks/${encodeURIComponent(artId)}/descriptors/${encodeURIComponent(d.descriptor_id)}`, { method:'DELETE', headers:{'X-Admin-Token': token}});
+            if (!resp.ok) throw new Error(await resp.text());
+            const idx = existing.findIndex(x=> x.descriptor_id === d.descriptor_id);
+            if (idx >= 0) existing.splice(idx,1);
+            renderList();
+          } catch (err){ alert('Delete failed: ' + (err?.message || err)); }
+        });
+        frag.appendChild(row);
+      });
+      // Pending items
+      pending.forEach((p,idx)=>{
+        const row = document.createElement('div');
+        row.className = 'file-row';
+        row.innerHTML = `<div class="file-name">${escapeHtml(p.filename || p.id)}</div>` +
+          `<button class="file-del" type="button" title="Remove">${iconTrash()}</button>`;
+        row.querySelector('.file-del').addEventListener('click', ()=>{
+          pending.splice(idx,1);
+          renderList();
+        });
+        frag.appendChild(row);
+      });
+      listEl.appendChild(frag);
+    }
+
+    renderList();
+
+    addBtn?.addEventListener('click', ()=> hiddenFile?.click());
+    hiddenFile?.addEventListener('change', async ()=>{
+      const files = Array.from(hiddenFile.files || []);
+      if (!files.length) return;
+      addName.value = files[0].name;
+      await initEmbeddingModel();
+      for (const f of files){
+        const can = await imageToCanvas224(f);
+        const embedding = embedFromCanvas(can);
+        let base = descriptorIdFor(f, pending.length);
+        base = makeUnique(base);
+        pending.push({ id: base, filename: f.name, embedding });
+      }
+      hiddenFile.value = '';
+      renderList();
+    });
+
+    function buildDescriptions(){
+      const it = ($('#md_desc_it').value || '').trim();
+      const en = ($('#md_desc_en').value || '').trim();
+      const d = {}; if (it) d.it = it; if (en) d.en = en; return d;
+    }
+
+    $('#md_save')?.addEventListener('click', async ()=>{
+      const payload = {
+        id: artId,
+        title: ($('#md_title').value || '').trim() || null,
+        artist: ($('#md_artist').value || '').trim() || null,
+        year: ($('#md_year').value || '').trim() || null,
+        museum: ($('#md_museum').value || '').trim() || null,
+        location: ($('#md_location').value || '').trim() || null,
+        descriptions: buildDescriptions(),
+        visual_descriptors: pending.map(p=> ({ id: p.id, embedding: p.embedding }))
+      };
+      let token = '';
+      try { token = localStorage.getItem('X_ADMIN_TOKEN') || ''; } catch{}
+      if (!token) token = prompt('Enter X-Admin-Token') || '';
+      if (!token) return;
+      try {
+        const res = await fetch(`${BACKEND_URL}/artworks`, { method:'POST', headers:{ 'Content-Type':'application/json','X-Admin-Token': token}, body: JSON.stringify(payload)});
+        if (!res.ok) throw new Error(await res.text());
+        close();
+        await loadCollection();
+      } catch (err){
+        alert('Save failed: ' + (err?.message || err));
+      }
+    });
+  }
 })();

@@ -329,6 +329,52 @@ def delete_artwork(art_id: str, x_admin_token: str = Header(default="")):
     return {"status": "ok", "deleted": art_id}
 
 
+@app.get("/artworks/{art_id}")
+def get_artwork_detail(art_id: str):
+    row = run(
+        """
+        select id, title, artist, year, museum, location, descriptions
+        from artworks where id = :id
+        """,
+        {"id": art_id}
+    ).mappings().first()
+    if not row:
+        raise HTTPException(status_code=404, detail="Artwork not found")
+    desc_rows = run(
+        """
+        select descriptor_id, image_path
+        from descriptors
+        where artwork_id = :id
+        order by descriptor_id
+        """,
+        {"id": art_id}
+    ).mappings().all()
+    data = dict(row)
+    data["descriptors"] = [dict(r) for r in desc_rows]
+    return data
+
+
+@app.delete("/artworks/{art_id}/descriptors/{descriptor_id}")
+def delete_artwork_descriptor(art_id: str, descriptor_id: str, x_admin_token: str = Header(default="")):
+    if not ADMIN_TOKEN or x_admin_token != ADMIN_TOKEN:
+        raise HTTPException(status_code=401, detail="Unauthorized")
+    res = run(
+        "delete from descriptors where artwork_id = :art_id and descriptor_id = :desc_id",
+        {"art_id": art_id, "desc_id": descriptor_id}
+    )
+    try:
+        count = getattr(res, "rowcount", None)
+    except Exception:
+        count = None
+    if count == 0:
+        raise HTTPException(status_code=404, detail="Descriptor not found")
+    try:
+        _refresh_cache_from_db()
+    except Exception as re:
+        print("[ArtLens] cache refresh error after descriptor delete:", re)
+    return {"status": "ok", "deleted": descriptor_id}
+
+
 @app.get("/health_db")
 def health_db():
     try:
