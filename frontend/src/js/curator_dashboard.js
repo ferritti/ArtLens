@@ -132,7 +132,8 @@ if (formEl) formEl.addEventListener('submit', onSubmit);
       tabs: ['Aggiungi Opera', 'Gestisci Collezione'],
       sectionTitle: 'Aggiungi Nuova Opera',
       dzStrong: 'Clicca per caricare',
-      dzSmall: 'PNG, JPG fino a 10MB',
+      dzSmall: '',
+      imagesLabel: "Immagini Opera d'Arte",
       fields: {
         title: { label: 'Titolo', ph: 'Inserisci il titolo dell\'opera' },
         artist: { label: 'Artista', ph: 'Inserisci il nome dell\'artista' },
@@ -143,7 +144,31 @@ if (formEl) formEl.addEventListener('submit', onSubmit);
         desc_en: { label: 'Descrizione EN', ph: 'Descrizione in inglese' }
       },
       save: 'Salva Opera',
-      filesSelected: (n)=> n ? `${n} file selezionati` : ''
+      filesSelected: (n)=> n ? `${n} file selezionati` : '',
+      manage: {
+        sectionTitle: 'Gestione Collezione',
+        countSuffix: 'opere in collezione',
+        headers: { title: 'Titolo', images: 'Immagini', actions: 'Azioni' },
+        loadFailRow: 'Impossibile caricare la collezione',
+        emptyRow: 'Nessuna opera presente',
+        filesCount: (n)=> n===1 ? '1 file' : `${n} file`,
+        edit: 'Modifica',
+        delete: 'Elimina',
+        confirmDeleteArtwork: 'Eliminare questa opera? L’operazione non può essere annullata.',
+        editArtwork: 'Modifica Opera',
+        close: 'Chiudi',
+        fieldLabels: { Title:'Titolo', Artist:'Artista', Year:'Anno', Museum:'Museo', Location:'Posizione', ItalianDescription:'Descrizione Italiana', EnglishDescription:'Descrizione Inglese' },
+        imageFiles: 'File Immagine',
+        add: 'Aggiungi',
+        cancel: 'Annulla',
+        saveChanges: 'Salva Modifiche',
+        deleteImageConfirm: (name)=> `Eliminare l’immagine "${name}"?`,
+        remove: 'Rimuovi',
+        tokenPrompt: 'Inserisci X-Admin-Token',
+        deleteFailed: 'Eliminazione non riuscita: ',
+        saveFailed: 'Salvataggio non riuscito: ',
+        detailsLoadFailed: 'Impossibile caricare i dettagli dell’opera'
+      }
     },
     en: {
       title: 'Curator Dashboard',
@@ -152,7 +177,8 @@ if (formEl) formEl.addEventListener('submit', onSubmit);
       tabs: ['Add Artwork', 'Manage Collection'],
       sectionTitle: 'Add New Artwork',
       dzStrong: 'Click to upload',
-      dzSmall: 'PNG, JPG up to 10MB',
+      dzSmall: '',
+      imagesLabel: 'Artwork Images',
       fields: {
         title: { label: 'Title', ph: 'Enter artwork title' },
         artist: { label: 'Artist', ph: 'Enter artist name' },
@@ -163,7 +189,31 @@ if (formEl) formEl.addEventListener('submit', onSubmit);
         desc_en: { label: 'EN description', ph: 'Description in English' }
       },
       save: 'Save Artwork',
-      filesSelected: (n)=> n ? `${n} file selected` : ''
+      filesSelected: (n)=> n ? `${n} file selected` : '',
+      manage: {
+        sectionTitle: 'Collection Management',
+        countSuffix: 'artworks in collection',
+        headers: { title: 'Title', images: 'Images', actions: 'Actions' },
+        loadFailRow: 'Failed to load collection',
+        emptyRow: 'No artworks yet',
+        filesCount: (n)=> n===1 ? '1 file' : `${n} files`,
+        edit: 'Edit',
+        delete: 'Delete',
+        confirmDeleteArtwork: 'Delete this artwork? This cannot be undone.',
+        editArtwork: 'Edit Artwork',
+        close: 'Close',
+        fieldLabels: { Title:'Title', Artist:'Artist', Year:'Year', Museum:'Museum', Location:'Location', ItalianDescription:'Italian Description', EnglishDescription:'English Description' },
+        imageFiles: 'Image Files',
+        add: 'Add',
+        cancel: 'Cancel',
+        saveChanges: 'Save Changes',
+        deleteImageConfirm: (name)=> `Delete image "${name}"?`,
+        remove: 'Remove',
+        tokenPrompt: 'Enter X-Admin-Token',
+        deleteFailed: 'Delete failed: ',
+        saveFailed: 'Save failed: ',
+        detailsLoadFailed: 'Failed to load artwork details'
+      }
     }
   };
   function t(){ return I18N[getLang()] || I18N.it; }
@@ -175,7 +225,7 @@ if (formEl) formEl.addEventListener('submit', onSubmit);
 
     const title = document.querySelector('.head .title');
     const subtitle = document.querySelector('.head .subtitle');
-    if (title) title.innerHTML = (lang === 'en') ? 'Curator <br/>Dashboard' : 'Curatore <br/>Dashboard';
+    if (title) title.innerHTML = (lang === 'en') ? 'Curator <br/>Dashboard' : 'Dashboard <br/>Curatore';
     if (subtitle) subtitle.innerHTML = (lang === 'en') ? "Manage your museum's<br/>artwork collection" : 'Gestisci la collezione<br/>del museo';
 
     const signOut = document.querySelector('#signOutBtn span');
@@ -201,6 +251,28 @@ if (formEl) formEl.addEventListener('submit', onSubmit);
       if (strong) strong.textContent = tr.dzStrong;
       if (small) small.textContent = tr.dzSmall;
     }
+
+    // Images field label (file input)
+    const imgLabel = document.querySelector('label[for="images"]');
+    if (imgLabel && tr.imagesLabel) imgLabel.textContent = tr.imagesLabel;
+
+    // Manage section static labels
+    try {
+      const trm = tr.manage;
+      const mt = document.getElementById('mgmtTitle');
+      if (mt && trm?.sectionTitle) mt.textContent = trm.sectionTitle;
+      const cnt = document.querySelector('.mgmt-count');
+      if (cnt && trm?.countSuffix) {
+        const n = (cnt.querySelector('#mgmtCount')?.textContent || '0');
+        cnt.innerHTML = `<span id="mgmtCount">${n}</span> ${trm.countSuffix}`;
+      }
+      const th1 = document.querySelector('#collectionTable thead th:nth-child(1)');
+      const th2 = document.querySelector('#collectionTable thead th:nth-child(2)');
+      const th3 = document.querySelector('#collectionTable thead th:nth-child(3)');
+      if (th1 && trm?.headers?.title) th1.textContent = trm.headers.title;
+      if (th2 && trm?.headers?.images) th2.textContent = trm.headers.images;
+      if (th3 && trm?.headers?.actions) th3.textContent = trm.headers.actions;
+    } catch {}
 
     // Fields labels and placeholders
     const map = [
@@ -334,26 +406,31 @@ if (formEl) formEl.addEventListener('submit', onSubmit);
       renderCollection(Array.isArray(items) ? items : []);
     } catch (e) {
       console.error('Load collection error', e);
-      if (tbody) tbody.innerHTML = `<tr><td colspan="3" style="color:#a33;">Failed to load collection</td></tr>`;
+      if (tbody) {
+        const trm = (I18N[getLang()] || I18N.it).manage;
+        tbody.innerHTML = `<tr><td colspan="3" style="color:#a33;">${trm.loadFailRow}</td></tr>`;
+      }
     }
   }
 
   function renderCollection(items){
     if (countEl) countEl.textContent = String(items.length || 0);
     if (!tbody) return;
+    const trm = (I18N[getLang()] || I18N.it).manage;
     if (!items.length) {
-      tbody.innerHTML = `<tr><td colspan="3" style="color:#5e718f;">No artworks yet</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan=\"3\" style=\"color:#5e718f;\">${trm.emptyRow}</td></tr>`;
       return;
     }
     const frag = document.createDocumentFragment();
     items.forEach((it)=>{
       const tr = document.createElement('tr');
+      const n = Number(it.image_count||0);
       tr.innerHTML = `
-        <td class="col-title">${escapeHtml(it.title || '')}</td>
-        <td class="col-images">${Number(it.image_count||0)} file(s)</td>
-        <td class="col-actions">
-          <button class="btn-edit" data-id="${it.id}" type="button" title="Edit">${iconEdit()}<span>Edit</span></button>
-          <button class="btn-del" data-id="${it.id}" type="button" title="Delete">${iconTrash()}</button>
+        <td class=\"col-title\">${escapeHtml(it.title || '')}</td>
+        <td class=\"col-images\">${trm.filesCount(n)}</td>
+        <td class=\"col-actions\">
+          <button class=\"btn-edit\" data-id=\"${it.id}\" type=\"button\" title=\"${trm.edit}\">${iconEdit()}<span>${trm.edit}</span></button>
+          <button class=\"btn-del\" data-id=\"${it.id}\" type=\"button\" title=\"${trm.delete}\" aria-label=\"${trm.delete}\">${iconTrash()}</button>
         </td>
       `;
       frag.appendChild(tr);
@@ -366,10 +443,11 @@ if (formEl) formEl.addEventListener('submit', onSubmit);
       btn.addEventListener('click', async (e)=>{
         const id = e.currentTarget.getAttribute('data-id');
         if (!id) return;
-        if (!confirm('Delete this artwork? This cannot be undone.')) return;
+        const trm = (I18N[getLang()] || I18N.it).manage;
+        if (!confirm(trm.confirmDeleteArtwork)) return;
         let token = '';
         try { token = localStorage.getItem('X_ADMIN_TOKEN') || ''; } catch{}
-        if (!token) token = prompt('Enter X-Admin-Token') || '';
+        if (!token) token = prompt(trm.tokenPrompt) || '';
         if (!token) return;
         try {
           const resp = await fetch(`${BACKEND_URL}/artworks/${encodeURIComponent(id)}`, { method:'DELETE', headers: { 'X-Admin-Token': token }});
@@ -379,7 +457,8 @@ if (formEl) formEl.addEventListener('submit', onSubmit);
           }
           await loadCollection();
         } catch(err){
-          alert('Delete failed: ' + (err?.message || err));
+          const trm2 = (I18N[getLang()] || I18N.it).manage;
+          alert(trm2.deleteFailed + (err?.message || err));
         }
       });
     });
@@ -409,56 +488,57 @@ if (formEl) formEl.addEventListener('submit', onSubmit);
   async function openEditModal(artId){
     const ov = document.createElement('div');
     ov.className = 'md-overlay';
+    const trm = (I18N[getLang()] || I18N.it).manage;
     ov.innerHTML = `
       <div class="md-card" role="dialog" aria-modal="true" aria-labelledby="mdTitle">
         <div class="md-header">
-          <h3 id="mdTitle" class="md-title">Edit Artwork</h3>
-          <button class="md-close" type="button" title="Close" aria-label="Close">&times;</button>
+          <h3 id="mdTitle" class="md-title">${trm.editArtwork}</h3>
+          <button class="md-close" type="button" title="${trm.close}" aria-label="${trm.close}">&times;</button>
         </div>
         <div class="md-body">
           <div class="md-grid">
             <div>
-              <div class="md-label">Title</div>
+              <div class="md-label">${trm.fieldLabels.Title}</div>
               <input id="md_title" class="md-input" />
             </div>
             <div>
-              <div class="md-label">Artist</div>
+              <div class="md-label">${trm.fieldLabels.Artist}</div>
               <input id="md_artist" class="md-input" />
             </div>
             <div>
-              <div class="md-label">Year</div>
+              <div class="md-label">${trm.fieldLabels.Year}</div>
               <input id="md_year" class="md-input" />
             </div>
             <div>
-              <div class="md-label">Museum</div>
+              <div class="md-label">${trm.fieldLabels.Museum}</div>
               <input id="md_museum" class="md-input" />
             </div>
             <div class="full">
-              <div class="md-label">Location</div>
+              <div class="md-label">${trm.fieldLabels.Location}</div>
               <input id="md_location" class="md-input" />
             </div>
             <div class="full">
-              <div class="md-label">Italian Description</div>
+              <div class="md-label">${trm.fieldLabels.ItalianDescription}</div>
               <textarea id="md_desc_it" class="md-textarea"></textarea>
             </div>
             <div class="full">
-              <div class="md-label">English Description</div>
+              <div class="md-label">${trm.fieldLabels.EnglishDescription}</div>
               <textarea id="md_desc_en" class="md-textarea"></textarea>
             </div>
           </div>
 
           <div class="file-sec">
-            <h3>Image Files</h3>
+            <h3>${trm.imageFiles}</h3>
             <div id="md_file_list" class="file-list"></div>
             <div class="add-row">
-              <button id="md_add_btn" class="add-btn" type="button">+ Add</button>
+              <button id="md_add_btn" class="add-btn" type="button">+ ${trm.add}</button>
               <input id="md_hidden_file" type="file" accept="image/png,image/jpeg" multiple style="display:none" />
             </div>
           </div>
 
           <div class="md-footer">
-            <button id="md_cancel" type="button" class="btn-cancel">Cancel</button>
-            <button id="md_save" type="button" class="btn-primary">Save Changes</button>
+            <button id="md_cancel" type="button" class="btn-cancel">${trm.cancel}</button>
+            <button id="md_save" type="button" class="btn-primary">${trm.saveChanges}</button>
           </div>
         </div>
       </div>
@@ -476,7 +556,8 @@ if (formEl) formEl.addEventListener('submit', onSubmit);
       if (!r.ok) throw new Error(await r.text());
       data = await r.json();
     } catch (e) {
-      alert('Failed to load artwork details');
+      const trmE = (I18N[getLang()] || I18N.it).manage;
+      alert(trmE.detailsLoadFailed);
       close();
       return;
     }
@@ -495,6 +576,7 @@ if (formEl) formEl.addEventListener('submit', onSubmit);
     const listEl = $('#md_file_list');
     const hiddenFile = $('#md_hidden_file');
     const addBtn = $('#md_add_btn');
+    const addName = $('#md_add_filename');
     const usedIds = new Set((data.descriptors||[]).map(d=> String(d.descriptor_id)));
     const existing = Array.isArray(data.descriptors) ? [...data.descriptors] : [];
     const pending = [];
@@ -515,13 +597,14 @@ if (formEl) formEl.addEventListener('submit', onSubmit);
       existing.forEach((d)=>{
         const row = document.createElement('div');
         row.className = 'file-row';
+        const trm = (I18N[getLang()] || I18N.it).manage;
         row.innerHTML = `<div class="file-name">${escapeHtml(d.descriptor_id)}</div>` +
-          `<button class="file-del" type="button" title="Delete">${iconTrash()}</button>`;
+          `<button class="file-del" type="button" title="${trm.delete}">${iconTrash()}</button>`;
         row.querySelector('.file-del').addEventListener('click', async ()=>{
-          if (!confirm(`Delete image \"${d.descriptor_id}\"?`)) return;
+          if (!confirm(trm.deleteImageConfirm(d.descriptor_id))) return;
           let token = '';
           try { token = localStorage.getItem('X_ADMIN_TOKEN') || ''; } catch{}
-          if (!token) token = prompt('Enter X-Admin-Token') || '';
+          if (!token) token = prompt(trm.tokenPrompt) || '';
           if (!token) return;
           try {
             const resp = await fetch(`${BACKEND_URL}/artworks/${encodeURIComponent(artId)}/descriptors/${encodeURIComponent(d.descriptor_id)}`, { method:'DELETE', headers:{'X-Admin-Token': token}});
@@ -537,8 +620,9 @@ if (formEl) formEl.addEventListener('submit', onSubmit);
       pending.forEach((p,idx)=>{
         const row = document.createElement('div');
         row.className = 'file-row';
+        const trm = (I18N[getLang()] || I18N.it).manage;
         row.innerHTML = `<div class="file-name">${escapeHtml(p.filename || p.id)}</div>` +
-          `<button class="file-del" type="button" title="Remove">${iconTrash()}</button>`;
+          `<button class="file-del" type="button" title="${trm.remove}">${iconTrash()}</button>`;
         row.querySelector('.file-del').addEventListener('click', ()=>{
           pending.splice(idx,1);
           renderList();
@@ -554,6 +638,7 @@ if (formEl) formEl.addEventListener('submit', onSubmit);
     hiddenFile?.addEventListener('change', async ()=>{
       const files = Array.from(hiddenFile.files || []);
       if (!files.length) return;
+      addName.value = files[0].name;
       await initEmbeddingModel();
       for (const f of files){
         const can = await imageToCanvas224(f);
@@ -593,7 +678,8 @@ if (formEl) formEl.addEventListener('submit', onSubmit);
         close();
         await loadCollection();
       } catch (err){
-        alert('Save failed: ' + (err?.message || err));
+        const trm = (I18N[getLang()] || I18N.it).manage;
+        alert(trm.saveFailed + (err?.message || err));
       }
     });
   }
