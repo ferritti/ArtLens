@@ -37,7 +37,7 @@ body{
 .top:hover{ opacity:0.85; }
 
 /* Lock badge */
-.badge{ display:grid; place-items:center; width:108px; height:108px; margin:28px auto 18px; border-radius:50%;
+.badge{ display:grid; place-items:center; width:100px; height:100px; margin:28px auto 18px; border-radius:50%;
   background:
     radial-gradient(120% 120% at 32% 24%, #ffd36a 0%, #ffb23a 36%, rgba(255,178,46,0) 70%),
     linear-gradient(180deg, #f39b00 0%, #e17400 100%);
@@ -81,7 +81,7 @@ label{ display:grid; gap:10px; font-weight:700; color:#26344f; font-size:16px; }
 
 /* Responsive small devices spacing tweaks */
 @media (max-width:480px){
-  .badge{ width:92px; height:92px; }
+  .badge{ width:88px; height:88px; }
   .badge .ico-lock-white{ width:34px; height:34px; }
   .btn, .field input{ height:56px; }
 }
