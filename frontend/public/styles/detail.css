@@ -51,7 +51,24 @@
 .detail-meta { color: #4b4b4b; font-size: 14px; margin-bottom: 12px; }
 .detail-body { color: #333; font-size: 15px; line-height: 1.6; }
 .detail-actions { margin-top: 14px; display: flex; justify-content: center; }
-.detail .back { background: linear-gradient(180deg, var(--accent), #b89558); color: var(--accent-ink); padding: 12px 18px; border-radius: 999px; font-weight: 700; box-shadow: var(--shadow-md); }
+.detail .back {
+  appearance: none;
+  border: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  border-radius: 12px;
+  padding: 22px 24px;
+  min-height: 68px;
+  font-weight: 700;
+  font-size: clamp(18px, 3.6vw, 24px);
+  background: #0f49e0; /* match homepage Scan Artwork CTA */
+  color: #ffffff;
+  box-shadow: 0 10px 24px rgba(18,33,55,0.16), 0 1px 0 rgba(255,255,255,0.35) inset;
+}
+.detail .back:hover { filter: brightness(0.98); box-shadow: 0 12px 28px rgba(21,87,255,0.30); }
 
 /* Premium open/close animation states */
 .detail.open {
