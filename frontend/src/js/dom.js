@@ -12,7 +12,10 @@ export const detailEl = document.getElementById('detail');
 export const detailTitleEl = document.getElementById('detailTitle');
 export const detailMetaEl = document.getElementById('detailMeta');
 export const detailBodyEl = document.getElementById('detailBody');
-export const backBtn = document.getElementById('backBtn');
+export const detailArtistEl = document.getElementById('detailArtist');
+export const detailExtraEl = document.getElementById('detailExtra');
+export const moreBtn = document.getElementById('moreBtn');
+export const scanAnotherBtn = document.getElementById('scanAnotherBtn');
 
 export function get2DContext() {
   return canvasEl.getContext('2d');
