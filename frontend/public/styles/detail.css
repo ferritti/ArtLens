@@ -64,11 +64,11 @@
   min-height: 40px;
   font-weight: 700;
   font-size: clamp(14px, 2.8vw, 18px);
-  background: #0f49e0; /* match homepage Scan Artwork CTA */
+  background: linear-gradient(90deg, #f59e0b, #d97706); /* match homepage language bar */
   color: #ffffff;
-  box-shadow: 0 8px 20px rgba(18,33,55,0.16), 0 1px 0 rgba(255,255,255,0.35) inset;
+  box-shadow: 0 8px 20px rgba(217,119,6,0.28), 0 1px 0 rgba(255,255,255,0.35) inset;
 }
-.detail .back:hover { filter: brightness(0.98); box-shadow: 0 12px 28px rgba(21,87,255,0.30); }
+.detail .back:hover { filter: brightness(0.98); box-shadow: 0 12px 28px rgba(217,119,6,0.34); }
 
 /* Premium open/close animation states */
 .detail.open {
