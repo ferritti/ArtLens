@@ -334,7 +334,7 @@ if (formEl) formEl.addEventListener('submit', onSubmit);
       renderCollection(Array.isArray(items) ? items : []);
     } catch (e) {
       console.error('Load collection error', e);
-      if (tbody) tbody.innerHTML = `<tr><td colspan="5" style="color:#a33;">Failed to load collection</td></tr>`;
+      if (tbody) tbody.innerHTML = `<tr><td colspan="3" style="color:#a33;">Failed to load collection</td></tr>`;
     }
   }
 
@@ -342,7 +342,7 @@ if (formEl) formEl.addEventListener('submit', onSubmit);
     if (countEl) countEl.textContent = String(items.length || 0);
     if (!tbody) return;
     if (!items.length) {
-      tbody.innerHTML = `<tr><td colspan="5" style="color:#5e718f;">No artworks yet</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="3" style="color:#5e718f;">No artworks yet</td></tr>`;
       return;
     }
     const frag = document.createDocumentFragment();
@@ -350,8 +350,6 @@ if (formEl) formEl.addEventListener('submit', onSubmit);
       const tr = document.createElement('tr');
       tr.innerHTML = `
         <td class="col-title">${escapeHtml(it.title || '')}</td>
-        <td>${escapeHtml(it.artist || '')}</td>
-        <td>${escapeHtml(it.year || '')}</td>
         <td class="col-images">${Number(it.image_count||0)} file(s)</td>
         <td class="col-actions">
           <button class="btn-edit" data-id="${it.id}" type="button" title="Edit">${iconEdit()}<span>Edit</span></button>
