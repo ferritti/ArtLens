@@ -162,7 +162,8 @@ function openDetail(entry, confidence) {
   let meta = '';
   if (entry?.artist) meta += entry.artist;
   if (entry?.year) meta += (meta ? ' · ' : '') + entry.year;
-  if (entry?.museum || entry?.location) meta += (meta ? ' · ' : '') + (entry.museum || entry.location);
+  if (entry?.museum) meta += (meta ? ' · ' : '') + entry.museum;
+  if (entry?.location) meta += (meta ? ' · ' : '') + entry.location;
   if (detailMetaEl) detailMetaEl.textContent = meta;
   const desc = entry?.descriptions ? pickLangText(entry.descriptions) : (entry?.description || '');
   if (detailBodyEl) detailBodyEl.textContent = desc;
