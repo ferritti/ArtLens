@@ -7,7 +7,7 @@ import { getLang, setLang } from './db.js';
   // Simple localization dictionary for this page
   const I18N = {
     it: {
-      back: '<- Indietro',
+      back: 'Indietro',
       title: 'Accesso Curatore',
       subtitle: 'Accedi per gestire la collezione di opere',
       emailLabel: 'Email',
@@ -20,7 +20,7 @@ import { getLang, setLang } from './db.js';
       msg_err: 'Errore imprevisto. Riprova.'
     },
     en: {
-      back: '<- Back',
+      back: 'Back',
       title: 'Curator Access',
       subtitle: "Sign in to manage the artwork collection",
       emailLabel: 'Email',
