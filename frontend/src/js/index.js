@@ -1,4 +1,4 @@
-import { appEl, videoEl, canvasEl, hudEl, startBtn, statusEl, infoEl, detailEl, detailTitleEl, detailMetaEl, detailBodyEl, detailArtistEl, detailExtraEl, moreBtn, scanAnotherBtn } from './dom.js';
+import { appEl, videoEl, canvasEl, hudEl, startBtn, statusEl, infoEl, detailEl, detailTitleEl, detailMetaEl, detailBodyEl, backBtn } from './dom.js';
 import { status as setStatus, showInfo, hideHint, clearHotspots, clientPointToVideo, pointInBox } from './ui.js';
 import { initDetector, detector, closeDetector } from './detection.js';
 import { initEmbeddingModel } from './embedding.js';
@@ -37,7 +37,7 @@ function applyLanguageToUI() {
       title: "Scopri l'arte intorno a te",
       status: "Inquadra le opere con la fotocamera",
       start: "Avvia",
-      detail: { more: "Altri dettagli", scan: "Scansiona un’altra" },
+      back: "Indietro",
       // Homepage strings
       home: {
         subtitle: "Scopri l'arte attraverso la tecnologia",
@@ -50,7 +50,7 @@ function applyLanguageToUI() {
       title: "Discover art around you",
       status: "Point the camera at artworks",
       start: "Start",
-      detail: { more: "More Details", scan: "Scan Another" },
+      back: "Back",
       home: {
         subtitle: "Discover art through technology",
         scan: "Scan Artwork",
@@ -69,8 +69,7 @@ function applyLanguageToUI() {
   if (titleEl && t.title) titleEl.textContent = t.title;
   if (statusEl && t.status) statusEl.textContent = t.status;
   if (startBtn && t.start) startBtn.textContent = t.start;
-  if (moreBtn && t.detail?.more) moreBtn.textContent = t.detail.more;
-  if (scanAnotherBtn && t.detail?.scan) scanAnotherBtn.textContent = t.detail.scan;
+  if (backBtn && t.back) backBtn.textContent = t.back;
 
   // Homepage UI (gate on presence of #scanBtn)
   const scanBtnEl = document.getElementById('scanBtn');
@@ -159,25 +158,15 @@ function openDetail(entry, confidence) {
   try { infoEl.style.display = 'none'; } catch {}
   hideHint();
   clearHotspots();
-  if (detailTitleEl) detailTitleEl.textContent = entry?.title || 'Artwork';
-  if (detailArtistEl) detailArtistEl.textContent = entry?.artist || '';
-  if (detailMetaEl) detailMetaEl.textContent = entry?.year || '';
+  if (detailTitleEl) detailTitleEl.textContent = entry?.title || 'Opera';
+  let meta = '';
+  if (entry?.artist) meta += entry.artist;
+  if (entry?.year) meta += (meta ? ' · ' : '') + entry.year;
+  if (entry?.museum) meta += (meta ? ' · ' : '') + entry.museum;
+  if (entry?.location) meta += (meta ? ' · ' : '') + entry.location;
+  if (detailMetaEl) detailMetaEl.textContent = meta;
   const desc = entry?.descriptions ? pickLangText(entry.descriptions) : (entry?.description || '');
-  if (detailBodyEl) detailBodyEl.textContent = desc || '';
-  // Extra details (museum, location)
-  const extraParts = [];
-  if (entry?.museum) extraParts.push(entry.museum);
-  if (entry?.location) extraParts.push(entry.location);
-  const extra = extraParts.join(' · ');
-  if (detailExtraEl) {
-    detailExtraEl.textContent = extra;
-    // Always start hidden; user can reveal with More Details
-    detailExtraEl.classList.add('hidden');
-  }
-  if (moreBtn) {
-    // Hide the More Details button if there is nothing extra to show
-    moreBtn.classList.toggle('hidden', !extra);
-  }
+  if (detailBodyEl) detailBodyEl.textContent = desc;
   if (detailEl) {
     detailEl.classList.remove('hidden', 'closing');
     // Force reflow to ensure animation restarts
@@ -214,17 +203,11 @@ function closeDetail() {
   if (!running) { running = true; startLoop(); }
 }
 
-scanAnotherBtn?.addEventListener('click', (e) => {
+backBtn?.addEventListener('click', (e) => {
   e.preventDefault();
   if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
   if (typeof e.stopPropagation === 'function') e.stopPropagation();
   closeDetail();
-});
-
-moreBtn?.addEventListener('click', (e) => {
-  e.preventDefault();
-  if (detailExtraEl) detailExtraEl.classList.remove('hidden');
-  if (moreBtn) moreBtn.classList.add('hidden');
 });
 
 appEl?.addEventListener('click', (ev) => {
