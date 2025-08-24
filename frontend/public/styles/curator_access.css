@@ -66,7 +66,7 @@ label{ display:grid; gap:10px; font-weight:700; color:#26344f; font-size:16px; }
 
 /* Mask-based icons for inputs */
 .ico-in.mask{ background-color:#90a4bf; -webkit-mask-repeat:no-repeat; -webkit-mask-position:center; -webkit-mask-size:contain; mask-repeat:no-repeat; mask-position:center; mask-size:contain; }
-.ico-in.user-access{ -webkit-mask-image:url('../images/user - access.png'); mask-image:url('../images/user - access.png'); }
+.ico-in.user-access{ -webkit-mask-image:url('../images/user_access.png'); mask-image:url('../images/user_access.png'); }
 .ico-in.lock{ -webkit-mask-image:url('../images/lock.png'); mask-image:url('../images/lock.png'); }
 
 /* White lock icon inside top badge */
