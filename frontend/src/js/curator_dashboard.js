@@ -451,7 +451,6 @@ if (formEl) formEl.addEventListener('submit', onSubmit);
             <h3>Image Files</h3>
             <div id="md_file_list" class="file-list"></div>
             <div class="add-row">
-              <input id="md_add_filename" class="md-input" placeholder="Enter image filename (e.g., artwork_main.jpg)" readonly />
               <button id="md_add_btn" class="add-btn" type="button">+ Add</button>
               <input id="md_hidden_file" type="file" accept="image/png,image/jpeg" multiple style="display:none" />
             </div>
@@ -496,7 +495,6 @@ if (formEl) formEl.addEventListener('submit', onSubmit);
     const listEl = $('#md_file_list');
     const hiddenFile = $('#md_hidden_file');
     const addBtn = $('#md_add_btn');
-    const addName = $('#md_add_filename');
     const usedIds = new Set((data.descriptors||[]).map(d=> String(d.descriptor_id)));
     const existing = Array.isArray(data.descriptors) ? [...data.descriptors] : [];
     const pending = [];
@@ -556,7 +554,6 @@ if (formEl) formEl.addEventListener('submit', onSubmit);
     hiddenFile?.addEventListener('change', async ()=>{
       const files = Array.from(hiddenFile.files || []);
       if (!files.length) return;
-      addName.value = files[0].name;
       await initEmbeddingModel();
       for (const f of files){
         const can = await imageToCanvas224(f);
